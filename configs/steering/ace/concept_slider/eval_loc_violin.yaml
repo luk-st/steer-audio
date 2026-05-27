@@ -1,0 +1,11 @@
+method: concept_slider
+artifact: lukasz-staniszewski/ace-step-cs-violin-r8-tf6tf7
+concept: violin
+min-range: -0.9882
+max-range: 1.0844
+steps-per-side: 15
+duration: 30.0
+steps: 30
+guidance-scale: 5.0
+seed: 2115
+save-dir: outputs/eval/cs_loc_violin

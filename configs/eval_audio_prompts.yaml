@@ -1,0 +1,29 @@
+defaults:
+  - _self_
+  - patch_data: example_prompts
+  - paths: default
+  - extras: default
+  - patch_model: audioldm2_patch
+
+metrics:
+  fad: false
+  alignment: false
+  clap: true
+  clap_music: true
+  muqt: true
+
+paths:
+  generated_samples: "2025-01-12/16-06-34/audios"
+  reference_samples: "2025-01-12/16-06-34/audios"
+
+task_name: "eval"
+tags: ["dev"]
+device: "cuda"
+clap_prompt_template: "This is a music of {p}"
+muqt_prompt_template: "A {p} track"
+muqt_resample_to_24k: true
+clap_batch_size: 64
+muqt_batch_size: 32
+
+keep_audios: false
+save_per_prompt_sims: true

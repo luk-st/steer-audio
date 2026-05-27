@@ -1,0 +1,9 @@
+scorer: concept_slider
+concept: tempo
+output: steering_vectors/concept_slider/ace_tempo_r8_eta7_500_all
+no-model: true
+scorer-kwargs:
+  iterations: 500
+  eta: 7
+  layers: all
+  num_prompts: 100

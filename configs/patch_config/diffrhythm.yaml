@@ -1,0 +1,12 @@
+n_latents_per_prompt: 8
+seed: 222
+batch_size: 32
+num_inference_steps: 32
+guidance_scale: 4.0
+audio_dirname: "audios"
+path_with_results: null
+max_frames: 2048
+lrc_prompts: ""
+save_per_gpu: true
+method: "patch"
+save_clean_audio: false

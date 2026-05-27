@@ -1,0 +1,10 @@
+# @package _global_
+
+defaults:
+  - override /patch_config: ace
+  - override /patch_layers: ace/self_attn/none
+  - override /patch_data: musiccaps/violin_ace
+  - override /patch_model: ace_patch
+
+
+patch_config.lyrics: "[inst]"

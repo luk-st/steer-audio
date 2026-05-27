@@ -1,0 +1,9 @@
+pipeline:
+  _target_: src.models.ace_step.patchable_ace.PatchableACE
+
+model_name: "ace_step"
+
+device: "cuda"
+
+config:
+  sample_rate: 48000

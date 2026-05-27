@@ -1,0 +1,12 @@
+method: textemb
+artifact: ""
+concept: piano
+min-range: -0.18
+max-range: 0.98
+steps-per-side: 15
+method-kwargs: {te_split_step: 0, target_layers: all}
+duration: 30.0
+steps: 30
+guidance-scale: 5.0
+seed: 2115
+save-dir: outputs/eval/textemb_all_piano

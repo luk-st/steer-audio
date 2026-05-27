@@ -1,0 +1,10 @@
+scorer: caa
+concept: guitar_electronic
+output: steering_vectors/caa
+no-model: true
+scorer-kwargs:
+  num_inference_steps: 30
+  audio_duration: 30.0
+  guidance_scale: 5.0
+  seed: 10
+  save_all_cfg_passes: true

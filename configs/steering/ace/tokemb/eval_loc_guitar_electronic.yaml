@@ -1,0 +1,12 @@
+method: tokemb
+artifact: lukasz-staniszewski/ace-step-tokemb-guitar_electronic
+concept: guitar_electronic
+min-range: -3.73
+max-range: 4.83
+steps-per-side: 15
+method-kwargs: {te_split_step: 0, target_layers: tf6tf7}
+duration: 30.0
+steps: 30
+guidance-scale: 5.0
+seed: 2115
+save-dir: outputs/eval/tokemb_loc_guitar_electronic

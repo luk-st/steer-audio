@@ -1,0 +1,14 @@
+method: caa
+method-kwargs: {renorm: true}
+artifact: lukasz-staniszewski/ace-step-caa-electronic_music
+concept: electronic_music
+layers: tf6tf7
+steer-mode: cond_only
+min-range: -144.67
+max-range: 186.67
+steps-per-side: 15
+duration: 30.0
+steps: 30
+guidance-scale: 5.0
+seed: 2115
+save-dir: outputs/eval/caa_loc_electronic_music

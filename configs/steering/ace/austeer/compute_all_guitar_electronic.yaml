@@ -1,0 +1,10 @@
+scorer: austeer
+concept: guitar_electronic
+output: steering_vectors/austeer
+no-model: true
+scorer-kwargs:
+  layers: all
+  num_inference_steps: 30
+  audio_duration: 30.0
+  guidance_scale: 5.0
+  seed: 10

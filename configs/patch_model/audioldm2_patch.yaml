@@ -1,0 +1,10 @@
+pipeline:
+  _target_: src.models.audioldm.model.PatchableAudioLDM2
+
+model_name: "audioldm2"
+
+torch_dtype: float16
+device: "cuda"
+
+config:
+  sample_rate: 16000

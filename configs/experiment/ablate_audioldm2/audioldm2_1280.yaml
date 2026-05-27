@@ -1,0 +1,8 @@
+# @package _global_
+
+defaults:
+  - override /patch_config: audioldm2_ablate
+  - override /patch_layers: audioldm2/none
+  - override /patch_data: musiccaps/musiccaps_1280
+  - override /patch_model: audioldm2_patch
+

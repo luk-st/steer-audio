@@ -1,0 +1,11 @@
+method: concept_slider
+artifact: lukasz-staniszewski/ace-step-cs-piano-r8-tf6tf7
+concept: piano
+min-range: -0.5
+max-range: 0.42
+steps-per-side: 15
+duration: 30.0
+steps: 30
+guidance-scale: 5.0
+seed: 2115
+save-dir: outputs/eval/cs_loc_piano

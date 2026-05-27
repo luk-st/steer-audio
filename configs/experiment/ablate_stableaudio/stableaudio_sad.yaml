@@ -1,0 +1,7 @@
+# @package _global_
+
+defaults:
+  - override /patch_config: stableaudio_ablate
+  - override /patch_layers: stableaudio/none
+  - override /patch_data: musiccaps/sad
+  - override /patch_model: stableaudio_patch

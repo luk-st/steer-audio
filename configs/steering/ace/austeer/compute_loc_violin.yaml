@@ -1,0 +1,10 @@
+scorer: austeer
+concept: violin
+output: steering_vectors/austeer
+no-model: true
+scorer-kwargs:
+  layers: tf6tf7
+  num_inference_steps: 30
+  audio_duration: 30.0
+  guidance_scale: 5.0
+  seed: 10

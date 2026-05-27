@@ -1,0 +1,16 @@
+type: "csv"
+csv_path: "lukasz-staniszewski/patching-music-musiccaps-prompts"
+feature: "male"
+prefix_clean: ""
+suffix_clean: ""
+prefix_corrupted: ""
+suffix_corrupted: ""
+
+
+eval_clap_prompts:
+  - A male vocal singing
+  - A female vocal singing
+
+eval_muqt_prompts:
+  - male singer
+  - female singer

@@ -1,0 +1,2 @@
+layers_to_patch:
+  - ".unet.up_blocks.1"

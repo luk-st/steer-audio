@@ -1,0 +1,24 @@
+# NOTE: scores_cache_path below points at a local file. There is no
+# published HF repo `ace-step-sae-scores-<this concept>` yet — you'll
+# need to compute the scores locally first (see scripts/data/compute_sae_sv.py)
+# or switch to a concept with published scores (piano / mood / tempo / violin).
+# SAE feature-steering, dual-hookpoint (tf6 + tf7).
+# Per the paper: tfidf feature selection, top_k=20 at tf7, top_k=5 at tf6.
+method: sae
+artifact: lukasz-staniszewski/ace-step-sae-tf7-cross-attn
+concept: guitar_electronic
+min-range: -12.44
+max-range: 12.8
+steps-per-side: 15
+method-kwargs:
+  hookpoint: transformer_blocks.7.cross_attn
+  scores_cache_path: steering_vectors/sae/ace_guitar_electronic/tf7_scores.pkl
+  score_filename: tf7_scores.pkl
+  intervention_mode: steering_vector
+  selection_method: tfidf
+  top_k: 20
+duration: 30.0
+steps: 30
+guidance-scale: 5.0
+seed: 2115
+save-dir: outputs/eval/sae_loc_guitar_electronic

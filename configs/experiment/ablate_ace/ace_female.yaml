@@ -1,0 +1,9 @@
+# @package _global_
+
+defaults:
+  - override /patch_config: ace_ablate
+  - override /patch_layers: ace/self_attn/none
+  - override /patch_data: musiccaps/female_ace
+  - override /patch_model: ace_patch
+
+

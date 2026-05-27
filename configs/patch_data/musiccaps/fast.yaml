@@ -1,0 +1,13 @@
+type: csv
+csv_path: lukasz-staniszewski/patching-music-musiccaps-prompts
+feature: fast
+prefix_clean: 'Very fast song. '
+suffix_clean: . Fast song.
+prefix_corrupted: 'Very slow song. '
+suffix_corrupted: . Slow song.
+eval_clap_prompts:
+- fast song
+- slow song
+eval_muqt_prompts:
+- fast song
+- slow song

@@ -1,0 +1,8 @@
+method: audioldm_caa
+artifact: steering_vectors/caa_audioldm2/audioldm_electronic_music_allTrue_normTrue_all
+concept: electronic_music
+alphas: [-2, -1, 0, 1, 2]
+duration: 10.0
+steps: 30
+guidance-scale: 3.5
+save-dir: outputs/eval/audioldm_caa_electronic_music

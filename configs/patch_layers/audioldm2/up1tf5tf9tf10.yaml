@@ -1,0 +1,4 @@
+layers_to_patch:
+  - ".unet.up_blocks.1.attentions.5"
+  - ".unet.up_blocks.1.attentions.9"
+  - ".unet.up_blocks.1.attentions.10"

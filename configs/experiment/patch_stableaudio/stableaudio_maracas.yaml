@@ -1,0 +1,7 @@
+# @package _global_
+
+defaults:
+  - override /patch_config: stableaudio
+  - override /patch_layers: stableaudio/none
+  - override /patch_data: musiccaps/maracas
+  - override /patch_model: stableaudio_patch

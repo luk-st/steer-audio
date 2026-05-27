@@ -1,0 +1,9 @@
+pipeline:
+  _target_: src.models.diffrhythm.patchable_model.PatchableDiffRhythm
+
+model_name: "diffrhythm"
+
+device: "cuda"
+
+config:
+  sample_rate: 44100

@@ -1,0 +1,14 @@
+method: austeer
+artifact: lukasz-staniszewski/ace-step-austeer-guitar_electronic-tf6tf7
+concept: guitar_electronic
+layers: tf6tf7
+steer-mode: cond_only
+min-range: -2.89
+max-range: 2.89
+steps-per-side: 15
+method-kwargs: {k: 2048, mode: additive, renorm: true}
+duration: 30.0
+steps: 30
+guidance-scale: 5.0
+seed: 2115
+save-dir: outputs/eval/austeer_loc_guitar_electronic

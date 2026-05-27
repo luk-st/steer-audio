@@ -1,0 +1,13 @@
+type: csv
+csv_path: lukasz-staniszewski/patching-music-musiccaps-prompts
+feature: happy
+prefix_clean: ''
+suffix_clean: ''
+prefix_corrupted: ''
+suffix_corrupted: ''
+eval_clap_prompts:
+- happy song
+- sad song
+eval_muqt_prompts:
+- happy song
+- sad song

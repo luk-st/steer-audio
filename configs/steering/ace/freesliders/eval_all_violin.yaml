@@ -1,0 +1,12 @@
+method: freesliders
+artifact: ""
+concept: violin
+min-range: -2.17
+max-range: 2.99
+steps-per-side: 15
+method-kwargs: {split_step: 0, target_layers: all}
+duration: 30.0
+steps: 30
+guidance-scale: 5.0
+seed: 2115
+save-dir: outputs/eval/freesliders_all_violin

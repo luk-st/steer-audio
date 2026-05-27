@@ -1,0 +1,3 @@
+layers_to_patch:
+  - '.ace_step_transformer.transformer_blocks.6.cross_attn'
+  - '.ace_step_transformer.transformer_blocks.7.cross_attn'

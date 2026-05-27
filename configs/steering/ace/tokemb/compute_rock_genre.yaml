@@ -1,0 +1,3 @@
+scorer: tokemb
+concept: rock_genre
+output: steering_vectors/tokemb

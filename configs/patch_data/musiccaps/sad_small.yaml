@@ -1,0 +1,15 @@
+type: "csv"
+csv_path: "lukasz-staniszewski/patching-music-musiccaps-prompts"
+feature: "sad"
+prefix_clean: ""
+suffix_clean: ""
+prefix_corrupted: ""
+suffix_corrupted: ""
+
+eval_clap_prompts:
+  - cheerful song
+  - sad song
+
+eval_muqt_prompts:
+  - cheerful
+  - sad

@@ -1,0 +1,3 @@
+layers_to_patch:
+  - ".transformer.transformer_blocks.11.attn2"
+  - ".transformer.transformer_blocks.12.attn2"

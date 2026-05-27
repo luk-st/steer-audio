@@ -1,0 +1,3 @@
+layers_to_patch:
+  - ".unet.up_blocks.1.attentions.5.transformer_blocks.0"
+  - ".unet.up_blocks.1.attentions.5.transformer_blocks.1"

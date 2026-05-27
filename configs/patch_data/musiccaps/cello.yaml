@@ -1,0 +1,13 @@
+type: "csv"
+csv_path: "lukasz-staniszewski/patching-music-musiccaps-prompts"
+feature: "cello"
+prefix_clean: ""
+suffix_clean: ""
+prefix_corrupted: ""
+suffix_corrupted: ""
+
+eval_clap_prompts:
+  - cello music
+
+eval_muqt_prompts:
+  - cello music

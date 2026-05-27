@@ -1,0 +1,7 @@
+# @package _global_
+
+defaults:
+  - override /patch_config: audioldm2
+  - override /patch_layers: audioldm2/no_layers
+  - override /patch_data: musiccaps/violin
+  - override /patch_model: audioldm2_patch

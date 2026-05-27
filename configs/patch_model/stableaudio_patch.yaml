@@ -1,0 +1,10 @@
+pipeline:
+  _target_: src.models.stable_audio.model.PatchableStableAudio
+
+model_name: "stableaudio"
+
+torch_dtype: float16
+device: "cuda"
+
+config:
+  sample_rate: 44100

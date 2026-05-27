@@ -1,0 +1,2 @@
+layers_to_patch:
+  - '.ace_step_transformer.transformer_blocks.0.attn'

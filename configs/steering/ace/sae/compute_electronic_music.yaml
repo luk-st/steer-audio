@@ -1,0 +1,9 @@
+scorer: sae-scores
+concept: electronic_music
+output: steering_vectors/sae/ace_electronic_music
+scorer-kwargs:
+  layers: [tf7, tf6]
+  num_inference_steps: 30
+  guidance_scale: 5.0
+  audio_length_in_s: 30.0
+  seed: 10

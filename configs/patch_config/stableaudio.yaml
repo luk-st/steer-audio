@@ -1,0 +1,13 @@
+negative_prompt: "Low quality, average quality."
+n_latents_per_prompt: 8
+seed: 222
+audio_length_in_s: 9
+batch_size: 16
+n_waveforms_per_prompt: 1
+num_inference_steps: 100
+guidance_scale: 7.0
+audio_dirname: "audios"
+path_with_results: null
+save_per_gpu: false
+method: "patch"
+save_clean_audio: false

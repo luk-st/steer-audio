@@ -1,0 +1,11 @@
+method: concept_slider
+artifact: lukasz-staniszewski/ace-step-cs-vocal_gender-r8-all
+concept: vocal_gender
+min-range: -0.3
+max-range: 0.3
+steps-per-side: 15
+duration: 30.0
+steps: 30
+guidance-scale: 5.0
+seed: 2115
+save-dir: outputs/eval/cs_all_vocal_gender

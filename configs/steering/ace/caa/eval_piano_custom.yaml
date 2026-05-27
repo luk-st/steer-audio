@@ -1,0 +1,43 @@
+# CAA alpha sweep on ACE-Step — annotated kitchen-sink template.
+# Run:  python src/steering/run_eval.py --config configs/steering/ace/caa/eval_piano_custom.yaml
+# Every field below is also a CLI flag; CLI overrides YAML when both are supplied.
+
+method: caa
+artifact: lukasz-staniszewski/ace-step-caa-piano   # HF repo id, or local path
+concept: piano
+
+# --- Alpha sweep ----------------------------------------------------------
+alphas: [-30, -15, 0, 15, 30]
+# Alternative — symmetric sweep from a range:
+# min-range: -65
+# max-range: 65
+# steps-per-side: 15
+
+# --- Method hparams -------------------------------------------------------
+layers: tf6tf7
+steer-mode: cond_only
+method-kwargs:
+  renorm: true
+  renorm_after_steer: false
+
+# --- Generation hparams ---------------------------------------------------
+duration: 30.0
+steps: 30
+guidance-scale: 5.0
+seed: 2115
+lyrics: "[inst]"
+
+# --- Evaluation prompts ---------------------------------------------------
+# 1. Inline list (overrides the 100-prompt TEST_PROMPTS default):
+prompts:
+  - "a piano song"
+  - "instrumental music with piano lead"
+  - "a melancholic piano ballad"
+  - "upbeat jazz piano trio"
+# 2. From file:
+# prompts-file: data/generated_prompts.csv
+# prompts-column: clean_prompt
+# 3. Omit both — uses the 100-prompt TEST_PROMPTS set (paper default).
+
+# --- Output ---------------------------------------------------------------
+save-dir: outputs/eval/caa_piano_custom

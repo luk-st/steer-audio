@@ -1,0 +1,8 @@
+# @package _global_
+
+# to execute this experiment run:
+# python ./src/generate_audio.py experiment=generate_audioldm2_exprompts
+
+defaults:
+  - override /data: example_prompts
+  - override /model: audio_ldm_2

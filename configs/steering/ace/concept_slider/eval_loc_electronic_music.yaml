@@ -1,0 +1,11 @@
+method: concept_slider
+artifact: lukasz-staniszewski/ace-step-cs-electronic_music-r8-tf6tf7
+concept: electronic_music
+min-range: -1.3099
+max-range: 0.6974
+steps-per-side: 15
+duration: 30.0
+steps: 30
+guidance-scale: 5.0
+seed: 2115
+save-dir: outputs/eval/cs_loc_electronic_music

@@ -1,0 +1,12 @@
+method: tokemb
+artifact: lukasz-staniszewski/ace-step-tokemb-rock_genre
+concept: rock_genre
+min-range: -3.42
+max-range: 6.93
+steps-per-side: 15
+method-kwargs: {te_split_step: 0, target_layers: tf6tf7}
+duration: 30.0
+steps: 30
+guidance-scale: 5.0
+seed: 2115
+save-dir: outputs/eval/tokemb_loc_rock_genre
