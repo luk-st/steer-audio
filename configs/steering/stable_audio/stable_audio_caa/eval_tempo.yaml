@@ -1,0 +1,10 @@
+method: stable_audio_caa
+artifact: lukasz-staniszewski/stable-audio-caa-tempo
+concept: tempo
+alphas: [0.0, 0.1635, 0.3269, 0.4904, 0.6539, 0.8173, 0.9808, 1.1443, 1.3077, 1.4712, 1.6347, 1.7981, 1.9616, 2.1251, 2.2885, 2.452]
+duration: 10.0
+steps: 100
+guidance-scale: 7.0
+seed: 2115
+batch-size: 8
+save-dir: outputs/eval/stable_audio_caa_tempo

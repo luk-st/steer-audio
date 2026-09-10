@@ -1,0 +1,11 @@
+method: audioldm_caa
+method-kwargs: {target_layers: up1_late7}
+artifact: lukasz-staniszewski/audioldm2-caa-piano
+concept: piano
+alphas: [0.0, 1.4667, 2.9333, 4.4, 5.8667, 7.3333, 8.8, 10.2667, 11.7333, 13.2, 14.6667, 16.1333, 17.6, 19.0667, 20.5333, 22.0]
+duration: 10.0
+steps: 100
+guidance-scale: 4.5
+seed: 2115
+batch-size: 8
+save-dir: outputs/eval/audioldm_caa_loc_piano

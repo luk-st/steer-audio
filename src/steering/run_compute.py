@@ -43,6 +43,8 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[0] = str(ROOT)
 
+from src.steering.cli import apply_yaml_config  # noqa: E402
+
 
 def _import_methods() -> None:
     """Trigger every method package's import so both Controllers and Scorers
@@ -103,20 +105,7 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.config is not None:
-        import yaml
-
-        with args.config.open() as f:
-            cfg = yaml.safe_load(f) or {}
-        for key, val in cfg.items():
-            attr = key.replace("-", "_")
-            if not hasattr(args, attr):
-                parser.error(f"YAML config has unknown key {key!r}.")
-            current = getattr(args, attr)
-            is_default = current is None or (isinstance(current, (dict, list)) and not current)
-            if is_default:
-                if attr == "output" and isinstance(val, str):
-                    val = Path(val)
-                setattr(args, attr, val)
+        args = apply_yaml_config(parser, args, path_keys=("output",))
 
     # Validate now that YAML merge is done.
     for required in ("scorer", "output"):

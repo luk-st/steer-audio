@@ -1,8 +1,10 @@
 method: stable_audio_caa
-artifact: steering_vectors/caa_stable_audio/stable_audio_piano_allTrue_normTrue_all
+artifact: lukasz-staniszewski/stable-audio-caa-piano
 concept: piano
-alphas: [-4, -2, 0, 2, 4]
+alphas: [0.0, 0.2658, 0.5316, 0.7974, 1.0632, 1.329, 1.5948, 1.8606, 2.1264, 2.3922, 2.658, 2.9238, 3.1896, 3.4554, 3.7212, 3.987]
 duration: 10.0
 steps: 100
 guidance-scale: 7.0
+seed: 2115
+batch-size: 8
 save-dir: outputs/eval/stable_audio_caa_piano

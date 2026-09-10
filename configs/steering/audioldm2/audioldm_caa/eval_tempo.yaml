@@ -1,8 +1,10 @@
 method: audioldm_caa
-artifact: steering_vectors/caa_audioldm2/audioldm_tempo_allTrue_normTrue_all
+artifact: lukasz-staniszewski/audioldm2-caa-tempo
 concept: tempo
-alphas: [-2, -1, 0, 1, 2]
+alphas: [0.0, 0.2153, 0.4307, 0.646, 0.8613, 1.0767, 1.292, 1.5073, 1.7227, 1.938, 2.1533, 2.3687, 2.584, 2.7993, 3.0147, 3.23]
 duration: 10.0
-steps: 30
-guidance-scale: 3.5
+steps: 100
+guidance-scale: 4.5
+seed: 2115
+batch-size: 8
 save-dir: outputs/eval/audioldm_caa_tempo

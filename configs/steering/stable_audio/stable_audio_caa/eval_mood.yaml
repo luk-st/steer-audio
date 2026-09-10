@@ -1,0 +1,10 @@
+method: stable_audio_caa
+artifact: lukasz-staniszewski/stable-audio-caa-mood
+concept: mood
+alphas: [0.0, 0.1778, 0.3556, 0.5334, 0.7112, 0.889, 1.0668, 1.2446, 1.4224, 1.6002, 1.778, 1.9558, 2.1336, 2.3114, 2.4892, 2.667]
+duration: 10.0
+steps: 100
+guidance-scale: 7.0
+seed: 2115
+batch-size: 8
+save-dir: outputs/eval/stable_audio_caa_mood

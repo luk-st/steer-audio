@@ -141,6 +141,7 @@ class SteeringVectorArtifact:
                 revision=revision,
                 cache_dir=cache_dir,
                 allow_patterns=["*.pkl", "*.json", "*.md"],
+                ignore_patterns=["pos_vectors.pkl", "neg_vectors.pkl"],
             )
         )
         return cls.from_dir(path)
@@ -181,10 +182,13 @@ def _render_sv_card(
     Dispatches on ``config["method"]``:
     * ``austeer``: AUSteer header + AUSteerSteeringController quickstart.
     * ``*audioldm*``: AudioLDM header + AudioLDMCAASteeringController quickstart.
+    * ``*stable_audio*``: Stable Audio header + StableAudioCAASteeringController
+      quickstart.
     * default: ACE-Step CAA header + CAASteeringController quickstart.
     """
     method = str(config.get("method", "")).lower()
     is_audioldm = "audioldm" in method
+    is_stable_audio = "stable_audio" in method
     is_austeer = method == "austeer"
     concept = config.get("concept", "<concept>")
 
@@ -211,23 +215,34 @@ def _render_sv_card(
             "        audio_duration=10.0, infer_step=30, manual_seed=0,\n"
             "    )\n"
         )
-    elif is_audioldm:
-        backbone = "AudioLDM2"
+    elif is_audioldm or is_stable_audio:
+        backbone = "AudioLDM2" if is_audioldm else "Stable Audio Open"
         method_name = "CAA"
-        method_tag = "audioldm2"
+        method_tag = "audioldm2" if is_audioldm else "stable-audio"
+        cls = (
+            "AudioLDMCAASteeringController" if is_audioldm
+            else "StableAudioCAASteeringController"
+        )
+        model_cls = (
+            "SteerableAudioLDMModel" if is_audioldm else "SteerableStableAudioModel"
+        )
         description = (
-            f"Steering vectors for the **{concept}** concept on AudioLDM2, "
+            f"Steering vectors for the **{concept}** concept on {backbone}, "
             f"computed via contrastive activation addition (CAA)."
         )
+        # Generate at the settings the vectors were collected at.
+        steps = config.get("num_inference_steps", 100)
+        cfg_scale = config.get("guidance_scale", 4.5)
+        duration = config.get("audio_length_in_s", 10.0)
         quickstart = (
-            "from src.steering import SteerableAudioLDMModel, AudioLDMCAASteeringController\n\n"
-            'model = SteerableAudioLDMModel(device="cuda")\n'
-            f'ctrl = AudioLDMCAASteeringController.from_pretrained("{repo_id}", alpha=1.0)\n\n'
+            f"from src.steering import {model_cls}, {cls}\n\n"
+            f'model = {model_cls}(device="cuda")\n'
+            f'ctrl = {cls}.from_pretrained("{repo_id}", alpha=1.0)\n\n'
             "with model.steer(ctrl):\n"
             "    out = model.generate(\n"
             '        prompt="instrumental music",\n'
-            "        num_inference_steps=30, audio_length_in_s=10.0,\n"
-            "        guidance_scale=3.5, seed=0,\n"
+            f"        num_inference_steps={steps}, audio_length_in_s={duration},\n"
+            f"        guidance_scale={cfg_scale}, seed=0,\n"
             "    )\n"
         )
     else:

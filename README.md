@@ -172,7 +172,7 @@ A typical workflow: **(1)** compute steering artifacts once with `src/steering/r
 | [CAA](#caa) | Contrastive Activation Addition (mean-diff steering vector) | yes | `CAASteeringController` |
 | [SAE](#sae) | Sparse-autoencoder feature interventions | yes | `SAESteeringController` |
 
-Pretrained artifacts live in the [**ACE-Step Audio Steering Suite**](https://huggingface.co/collections/lukasz-staniszewski/ace-step-audio-steering-suite-6a0bb3dacbac8e6db8f4d4e4). Every example below uses `concept="piano"`; pass `target_layers="tf6tf7"` (or any list of block names) to restrict to localized layers.
+Pretrained artifacts live in the [**TADA Steering Collection**](https://huggingface.co/collections/lukasz-staniszewski/tada-steering-collection). Every example below uses `concept="piano"`; pass `target_layers="tf6tf7"` (or any list of block names) to restrict to localized layers. The table covers ACE-Step; AudioLDM2 and Stable Audio Open are steered through their own CAA controllers — see [Other architectures](#other-architectures-audioldm2-and-stable-audio-open).
 
 ---
 
@@ -350,6 +350,53 @@ python src/steering/run_compute.py \
                      "dataset_name":"data/music_caps.csv","audio_length_in_s":10.0}'
 
 python -m src.steering.methods.sae.lib.scripts.train_ace --help
+```
+
+### Other architectures: AudioLDM2 and Stable Audio Open
+
+We share CAA implementation for other two backbones, each with its own controller and
+HF steering vectors for the four concepts: piano, female vocal, tempo, mood.
+
+```python
+from src.steering import SteerableAudioLDMModel, AudioLDMCAASteeringController
+
+model = SteerableAudioLDMModel(device="cuda")
+ctrl = AudioLDMCAASteeringController.from_pretrained(
+    "lukasz-staniszewski/audioldm2-caa-piano", alpha=2.0,
+)
+with model.steer(ctrl):
+    audio = model.generate(prompt="instrumental music", num_inference_steps=100,
+                           audio_length_in_s=10.0, guidance_scale=4.5, seed=0)
+```
+
+```python
+from src.steering import SteerableStableAudioModel, StableAudioCAASteeringController
+
+model = SteerableStableAudioModel(device="cuda")
+ctrl = StableAudioCAASteeringController.from_pretrained(
+    "lukasz-staniszewski/stable-audio-caa-piano", alpha=2.0,
+)
+with model.steer(ctrl):
+    audio = model.generate(prompt="instrumental music", num_inference_steps=100,
+                           audio_length_in_s=10.0, guidance_scale=7.0, seed=0)
+```
+
+Steer only the localized blocks by passing the layer set the localization scan found
+(`target_layers` param):
+
+```bash
+# all blocks / localized blocks, over the paper's 16-point alpha grid
+python src/steering/run_eval.py --config configs/steering/audioldm2/audioldm_caa/eval_piano.yaml
+python src/steering/run_eval.py --config configs/steering/audioldm2/audioldm_caa/eval_loc_piano.yaml
+python src/steering/run_eval.py --config configs/steering/stable_audio/stable_audio_caa/eval_loc_piano.yaml
+```
+
+Compute your own vectors for any of the nine concepts (this is what produced the Hub
+artifacts above):
+
+```bash
+python src/steering/run_compute.py --config configs/steering/audioldm2/audioldm_caa/compute_violin.yaml
+# -> steering_vectors/caa_audioldm2/audioldm_violin_allTrue_normTrue_all
 ```
 
 ---

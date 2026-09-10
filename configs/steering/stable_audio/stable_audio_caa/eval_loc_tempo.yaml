@@ -1,0 +1,11 @@
+method: stable_audio_caa
+method-kwargs: {target_layers: tf4tf11tf12tf13tf18}
+artifact: lukasz-staniszewski/stable-audio-caa-tempo
+concept: tempo
+alphas: [0.0, 0.5535, 1.1069, 1.6604, 2.2139, 2.7673, 3.3208, 3.8743, 4.4277, 4.9812, 5.5347, 6.0881, 6.6416, 7.1951, 7.7485, 8.302]
+duration: 10.0
+steps: 100
+guidance-scale: 7.0
+seed: 2115
+batch-size: 8
+save-dir: outputs/eval/stable_audio_caa_loc_tempo

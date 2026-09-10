@@ -1,0 +1,13 @@
+scorer: audioldm_caa
+concept: violin
+output: steering_vectors/caa_audioldm2
+no-model: true
+scorer-kwargs:
+  num_inference_steps: 100
+  audio_length_in_s: 10.0
+  guidance_scale: 4.5
+  seed: 10
+  save_all_cfg_passes: true
+  layers: all
+  normalize_sv: true
+  dtype: float16

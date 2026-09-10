@@ -1,0 +1,11 @@
+method: stable_audio_caa
+method-kwargs: {target_layers: tf4tf11tf12tf13tf18}
+artifact: lukasz-staniszewski/stable-audio-caa-mood
+concept: mood
+alphas: [0.0, 0.78, 1.56, 2.34, 3.12, 3.9, 4.68, 5.46, 6.24, 7.02, 7.8, 8.58, 9.36, 10.14, 10.92, 11.7]
+duration: 10.0
+steps: 100
+guidance-scale: 7.0
+seed: 2115
+batch-size: 8
+save-dir: outputs/eval/stable_audio_caa_loc_mood
