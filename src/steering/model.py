@@ -17,6 +17,7 @@ method-agnostic::
 
 from __future__ import annotations
 
+import os
 from contextlib import contextmanager
 from typing import Any, Iterator
 
@@ -30,11 +31,12 @@ class SteerableACEModel:
         self,
         device: str = "cuda",
         dtype: str = "bfloat16",
-        persistent_storage_path: str = "res/ace_step",
+        persistent_storage_path: str | None = None,
         **pipeline_kwargs: Any,
     ) -> None:
-        # Import locally so the rest of the library doesn't drag the heavy
-        # ACE-Step dependency tree on import.
+        persistent_storage_path = persistent_storage_path or os.environ.get(
+            "ACE_STEP_CACHE", "res/ace_step"
+        )
         from src.models.ace_step.pipeline_ace import SimpleACEStepPipeline
 
         self.pipeline = SimpleACEStepPipeline(

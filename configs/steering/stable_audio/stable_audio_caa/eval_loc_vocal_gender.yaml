@@ -1,0 +1,11 @@
+method: stable_audio_caa
+method-kwargs: {target_layers: tf4tf11tf12tf13tf18}
+artifact: lukasz-staniszewski/stable-audio-caa-vocal-gender
+concept: vocal_gender
+alphas: [0.0, 0.436, 0.872, 1.308, 1.744, 2.18, 2.616, 3.052, 3.488, 3.924, 4.36, 4.796, 5.232, 5.668, 6.104, 6.54]
+duration: 10.0
+steps: 100
+guidance-scale: 7.0
+seed: 2115
+batch-size: 8
+save-dir: outputs/eval/stable_audio_caa_loc_vocal_gender

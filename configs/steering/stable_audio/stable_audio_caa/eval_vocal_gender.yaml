@@ -1,0 +1,10 @@
+method: stable_audio_caa
+artifact: lukasz-staniszewski/stable-audio-caa-vocal-gender
+concept: vocal_gender
+alphas: [0.0, 0.1321, 0.2641, 0.3962, 0.5283, 0.6603, 0.7924, 0.9245, 1.0565, 1.1886, 1.3207, 1.4527, 1.5848, 1.7169, 1.8489, 1.981]
+duration: 10.0
+steps: 100
+guidance-scale: 7.0
+seed: 2115
+batch-size: 8
+save-dir: outputs/eval/stable_audio_caa_vocal_gender

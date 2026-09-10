@@ -51,6 +51,8 @@ import torchaudio
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[0] = str(ROOT)
 
+from src.steering.cli import apply_yaml_config  # noqa: E402
+
 
 def _parse_alphas(spec: str) -> list[float]:
     return [float(x) for x in spec.split(",")]
@@ -175,36 +177,6 @@ def _build_controller(
             method_kwargs = {**method_kwargs, "concept": concept}
 
     return cls.from_pretrained(artifact, alpha=alpha, **method_kwargs)
-
-
-def _load_yaml_config(path: Path) -> dict[str, Any]:
-    """Load a YAML experiment config. See ``configs/steering/`` for examples."""
-    import yaml
-
-    with path.open() as f:
-        cfg = yaml.safe_load(f) or {}
-    return cfg
-
-
-def _apply_config_defaults(args: argparse.Namespace, cfg: dict[str, Any]) -> None:
-    """Fill argparse args from a YAML config when CLI didn't override them.
-
-    CLI flags always win over YAML values, so a config can be tweaked from the
-    command line without re-editing the file.
-    """
-    for key, val in cfg.items():
-        attr = key.replace("-", "_")
-        if not hasattr(args, attr):
-            # Unknown YAML key — surface, don't silently drop.
-            raise SystemExit(f"YAML config has unknown key {key!r}.")
-        current = getattr(args, attr)
-        is_default = current is None or (
-            isinstance(current, (dict, list)) and not current
-        )
-        if is_default:
-            if attr in ("save_dir", "config") and isinstance(val, str):
-                val = Path(val)
-            setattr(args, attr, val)
 
 
 def main() -> None:
@@ -346,7 +318,7 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.config is not None:
-        _apply_config_defaults(args, _load_yaml_config(args.config))
+        args = apply_yaml_config(parser, args, path_keys=("save_dir",))
 
     # After config merge, validate the required-args ourselves (since argparse
     # required=True wouldn't allow them to come from YAML).

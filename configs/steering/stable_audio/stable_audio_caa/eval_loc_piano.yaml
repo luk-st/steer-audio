@@ -1,0 +1,11 @@
+method: stable_audio_caa
+method-kwargs: {target_layers: tf4tf11tf12tf13tf18}
+artifact: lukasz-staniszewski/stable-audio-caa-piano
+concept: piano
+alphas: [0.0, 0.808, 1.616, 2.424, 3.232, 4.04, 4.848, 5.656, 6.464, 7.272, 8.08, 8.888, 9.696, 10.504, 11.312, 12.12]
+duration: 10.0
+steps: 100
+guidance-scale: 7.0
+seed: 2115
+batch-size: 8
+save-dir: outputs/eval/stable_audio_caa_loc_piano

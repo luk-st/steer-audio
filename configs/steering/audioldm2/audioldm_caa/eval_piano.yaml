@@ -1,8 +1,10 @@
 method: audioldm_caa
-artifact: steering_vectors/caa_audioldm2/audioldm_piano_allTrue_normTrue_all
+artifact: lukasz-staniszewski/audioldm2-caa-piano
 concept: piano
-alphas: [-2, -1, 0, 1, 2]
+alphas: [0.0, 0.2792, 0.5584, 0.8376, 1.1168, 1.396, 1.6752, 1.9544, 2.2336, 2.5128, 2.792, 3.0712, 3.3504, 3.6296, 3.9088, 4.188]
 duration: 10.0
-steps: 30
-guidance-scale: 3.5
+steps: 100
+guidance-scale: 4.5
+seed: 2115
+batch-size: 8
 save-dir: outputs/eval/audioldm_caa_piano

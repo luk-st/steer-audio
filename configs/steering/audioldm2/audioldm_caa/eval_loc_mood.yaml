@@ -1,0 +1,11 @@
+method: audioldm_caa
+method-kwargs: {target_layers: up1_late7}
+artifact: lukasz-staniszewski/audioldm2-caa-mood
+concept: mood
+alphas: [0.0, 1.0667, 2.1333, 3.2, 4.2667, 5.3333, 6.4, 7.4667, 8.5333, 9.6, 10.6667, 11.7333, 12.8, 13.8667, 14.9333, 16.0]
+duration: 10.0
+steps: 100
+guidance-scale: 4.5
+seed: 2115
+batch-size: 8
+save-dir: outputs/eval/audioldm_caa_loc_mood
