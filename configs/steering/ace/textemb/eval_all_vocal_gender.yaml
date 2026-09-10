@@ -1,8 +1,8 @@
 method: textemb
 artifact: ""
 concept: vocal_gender
-min-range: -0.43
-max-range: 0.78
+min-range: -0.4351
+max-range: 0.8044
 steps-per-side: 15
 method-kwargs: {te_split_step: 0, target_layers: all}
 duration: 30.0

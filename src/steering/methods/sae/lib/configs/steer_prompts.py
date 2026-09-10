@@ -109,8 +109,8 @@ def get_prompts_mood(num=50):
         "original song",
         "remix",
     ]
-    POSITIVE_PROMPTS = [f"happy song, {p}" for p in BASE_PROMPTS]  # or "cheerful", "joyful"
-    NEUTRAL_PROMPTS = [f"sad song, {p}" for p in BASE_PROMPTS]  # or "melancholic", "somber"
+    POSITIVE_PROMPTS = [f"happy song, {p}" for p in BASE_PROMPTS]
+    NEUTRAL_PROMPTS = [f"sad song, {p}" for p in BASE_PROMPTS]
     LYRICS = """[inst]"""
     return NEUTRAL_PROMPTS, POSITIVE_PROMPTS, LYRICS
 
@@ -168,8 +168,8 @@ def get_prompts_tempo(num=50):
         "an original song",
         "a remix",
     ]
-    POSITIVE_PROMPTS = [f"fast song, {p}" for p in BASE_PROMPTS]  # or "uptempo", "quick"
-    NEUTRAL_PROMPTS = [f"slow song, {p}" for p in BASE_PROMPTS]  # or "downtempo", "leisurely"
+    POSITIVE_PROMPTS = [f"fast song, {p}" for p in BASE_PROMPTS]
+    NEUTRAL_PROMPTS = [f"slow song, {p}" for p in BASE_PROMPTS]
     LYRICS = """[inst]"""
     return NEUTRAL_PROMPTS, POSITIVE_PROMPTS, LYRICS
 
@@ -347,7 +347,7 @@ def get_prompts_vocal_style(num=50):
     ]
     POSITIVE_PROMPTS = [f"{p}, with rap vocal" for p in BASE_PROMPTS]
     NEUTRAL_PROMPTS = [f"{p}, with sing vocal" for p in BASE_PROMPTS]
-    LYRICS = """"""  # allow vocals
+    LYRICS = """"""
     return NEUTRAL_PROMPTS, POSITIVE_PROMPTS, LYRICS
 
 

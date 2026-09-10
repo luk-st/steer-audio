@@ -111,7 +111,7 @@ class SteerableAudioLDMModel:
         disable_progress_bar: bool = True,
     ) -> None:
         import torch
-        from diffusers import AudioLDM2Pipeline
+        from diffusers.pipelines.audioldm2.pipeline_audioldm2 import AudioLDM2Pipeline
 
         dtype_map = {
             "float16": torch.float16,
@@ -123,11 +123,11 @@ class SteerableAudioLDMModel:
         }
         torch_dtype = dtype_map.get(dtype, dtype)
         self.repo_id = repo_id or self.DEFAULT_REPO_ID
-        pipe = AudioLDM2Pipeline.from_pretrained(
-            self.repo_id, torch_dtype=torch_dtype
-        ).to(device)
+        pipe = AudioLDM2Pipeline.from_pretrained(self.repo_id, torch_dtype=torch_dtype).to(
+            device
+        )
         if disable_progress_bar:
-            pipe.set_progress_bar_config(disable=True)
+            pipe.set_progress_bar_config(disable=True) # type: ignore
         self.pipeline = pipe
         self.device = device
         self.dtype = torch_dtype
@@ -136,11 +136,88 @@ class SteerableAudioLDMModel:
     @property
     def transformer(self):
         """The bare UNet (what AudioLDM controllers mount hooks onto)."""
-        return self.pipeline.unet
+        return self.pipeline.unet # type: ignore
 
     @property
     def sample_rate(self) -> int:
-        return self.pipeline.vocoder.config.sampling_rate
+        return self.pipeline.vocoder.config.sampling_rate # type: ignore
+
+    @contextmanager
+    def steer(self, controller: Controller | None) -> Iterator[Controller]:
+        if self._active_controller is not None:
+            raise RuntimeError(
+                f"A controller ({type(self._active_controller).__name__}) is "
+                "already mounted. Nested steering is not supported."
+            )
+        ctrl = controller if controller is not None else NullController()
+        ctrl.reset()
+        ctrl.mount(self.transformer)
+        self._active_controller = ctrl
+        try:
+            yield ctrl
+        finally:
+            ctrl.unmount()
+            self._active_controller = None
+
+    def generate(self, **pipeline_call_kwargs: Any):
+        """If a controller is mounted, dispatch to its :meth:`generate`;
+        otherwise call the diffusers pipeline directly. Returns a torch tensor."""
+        import torch as _torch
+
+        if self._active_controller is not None:
+            return self._active_controller.generate(self, **pipeline_call_kwargs)
+        return _torch.as_tensor(self.pipeline(**pipeline_call_kwargs).audios)
+
+
+class SteerableStableAudioModel:
+    """Thin wrapper over diffusers' ``StableAudioPipeline`` with a Controller slot.
+
+    Mirrors :class:`SteerableAudioLDMModel`'s surface so the unified runner can
+    drive Stable Audio Open through the same CLIs. Stable Audio is a DiT (not a
+    UNet), so controllers mount hooks onto ``pipeline.transformer``.
+    """
+
+    DEFAULT_REPO_ID = "stabilityai/stable-audio-open-1.0"
+
+    def __init__(
+        self,
+        device: str = "cuda",
+        dtype: str = "float16",
+        repo_id: str | None = None,
+        disable_progress_bar: bool = True,
+    ) -> None:
+        import torch
+        from diffusers.pipelines.stable_audio.pipeline_stable_audio import StableAudioPipeline
+
+        dtype_map = {
+            "float16": torch.float16,
+            "fp16": torch.float16,
+            "float32": torch.float32,
+            "fp32": torch.float32,
+            "bfloat16": torch.bfloat16,
+            "bf16": torch.bfloat16,
+        }
+        torch_dtype = dtype_map.get(dtype, dtype)
+        self.repo_id = repo_id or self.DEFAULT_REPO_ID
+        pipe = StableAudioPipeline.from_pretrained(
+            self.repo_id, torch_dtype=torch_dtype
+        ).to(device)
+        pipe.enable_vae_slicing() # type: ignore
+        if disable_progress_bar:
+            pipe.set_progress_bar_config(disable=True) # type: ignore
+        self.pipeline = pipe
+        self.device = device
+        self.dtype = torch_dtype
+        self._active_controller: Controller | None = None
+
+    @property
+    def transformer(self):
+        """The bare DiT (what Stable Audio controllers mount hooks onto)."""
+        return self.pipeline.transformer # type: ignore
+
+    @property
+    def sample_rate(self) -> int:
+        return self.pipeline.vae.config.sampling_rate # type: ignore
 
     @contextmanager
     def steer(self, controller: Controller | None) -> Iterator[Controller]:

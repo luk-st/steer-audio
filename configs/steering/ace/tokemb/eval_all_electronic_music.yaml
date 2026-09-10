@@ -1,8 +1,8 @@
 method: tokemb
-artifact: lukasz-staniszewski/ace-step-tokemb-electronic_music
+artifact: lukasz-staniszewski/ace-step-tokemb-electronic-music
 concept: electronic_music
-min-range: -1.85
-max-range: 4.83
+min-range: -1.8983
+max-range: 4.8871
 steps-per-side: 15
 method-kwargs: {te_split_step: 0, target_layers: all}
 duration: 30.0

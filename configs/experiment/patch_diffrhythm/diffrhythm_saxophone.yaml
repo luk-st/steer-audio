@@ -1,7 +1,0 @@
-# @package _global_
-
-defaults:
-  - override /patch_config: diffrhythm
-  - override /patch_layers: diffrhythm/none
-  - override /patch_data: musiccaps/saxophone
-  - override /patch_model: diffrhythm_patch

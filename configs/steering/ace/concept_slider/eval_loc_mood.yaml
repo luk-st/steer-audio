@@ -1,8 +1,8 @@
 method: concept_slider
-artifact: lukasz-staniszewski/ace-step-cs-mood-r8-tf6tf7
+artifact: lukasz-staniszewski/ace-step-cs-mood-r4-tf6tf7
 concept: mood
-min-range: -1.0
-max-range: 0.7
+min-range: -2.0356
+max-range: 1.4331
 steps-per-side: 15
 duration: 30.0
 steps: 30

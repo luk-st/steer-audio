@@ -1,8 +1,8 @@
 method: freesliders
 artifact: ""
 concept: violin
-min-range: -2.17
-max-range: 2.99
+min-range: -2.2627
+max-range: 2.9813
 steps-per-side: 15
 method-kwargs: {split_step: 0, target_layers: all}
 duration: 30.0

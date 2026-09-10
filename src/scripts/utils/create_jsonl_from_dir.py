@@ -6,11 +6,11 @@ def main(dirpath: str, filename: str):
     assert filename.endswith(".jsonl")
     assert Path(dirpath).is_dir()
 
-    dirpath = Path(dirpath)
-    outfile = (dirpath.parent.parent / filename).resolve()
+    dirpath = Path(dirpath) # type: ignore
+    outfile = (dirpath.parent.parent / filename).resolve() # type: ignore
 
-    all_files = list(dirpath.glob("*.wav"))
-    all_files = sorted(all_files)
+    all_files = list(dirpath.glob("*.wav")) # type: ignore
+    all_files = sorted(all_files) # type: ignore
 
     with open(outfile, "w") as f:
         for file in all_files:

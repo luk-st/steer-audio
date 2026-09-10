@@ -1,8 +1,8 @@
 method: freesliders
 artifact: ""
 concept: mood
-min-range: -3.2
-max-range: 2.0
+min-range: -3.2634
+max-range: 1.8704
 steps-per-side: 15
 method-kwargs: {split_step: 0, target_layers: all}
 duration: 30.0

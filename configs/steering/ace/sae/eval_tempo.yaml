@@ -1,0 +1,28 @@
+method: sae
+concept: tempo
+min-range: -14.997
+max-range: 24.6412
+steps-per-side: 15
+method-kwargs:
+  hookpoints:
+    - artifact: lukasz-staniszewski/ace-step-sae-tf6-cross-attn
+      hookpoint: transformer_blocks.6.cross_attn
+      scores_cache_path: lukasz-staniszewski/ace-step-sae-scores-tempo
+      score_filename: tf6_scores.pkl
+      intervention_mode: steering_vector
+      selection_method: tfidf
+      top_k: 20
+      renorm: true
+    - artifact: lukasz-staniszewski/ace-step-sae-tf7-cross-attn
+      hookpoint: transformer_blocks.7.cross_attn
+      scores_cache_path: lukasz-staniszewski/ace-step-sae-scores-tempo
+      score_filename: tf7_scores.pkl
+      intervention_mode: steering_vector
+      selection_method: tfidf
+      top_k: 10
+      renorm: true
+duration: 30.0
+steps: 30
+guidance-scale: 5.0
+seed: 2115
+save-dir: outputs/eval/sae_tempo

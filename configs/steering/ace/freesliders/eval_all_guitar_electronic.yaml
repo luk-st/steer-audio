@@ -1,8 +1,8 @@
 method: freesliders
 artifact: ""
 concept: guitar_electronic
-min-range: -2.33
-max-range: 2.61
+min-range: -2.4087
+max-range: 2.6186
 steps-per-side: 15
 method-kwargs: {split_step: 0, target_layers: all}
 duration: 30.0

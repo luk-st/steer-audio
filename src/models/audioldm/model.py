@@ -1,16 +1,16 @@
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
-from src.models.utils import move_tensor_obj_to_device
 
 import numpy as np
 import torch
 from accelerate import Accelerator
-from diffusers import AudioLDMPipeline
+from diffusers.pipelines.audioldm2.pipeline_audioldm2 import AudioLDM2Pipeline
 from nnsight.modeling.diffusion import DiffusionModel
 from tqdm import tqdm
 
 from src.models.audioldm.utils import get_cross_attention_inputs_keys
+from src.models.utils import move_tensor_obj_to_device
 from src.utils import RankedLogger
 
 log = RankedLogger(__name__, rank_zero_only=True)
@@ -27,8 +27,8 @@ class PatchableAudioLDM2:
         self.model = DiffusionModel("cvssp/audioldm2-large", torch_dtype=dtype, dispatch=True)
         if device is not None:
             self.model = self.model.to(device)
-        self.model.pipeline.set_progress_bar_config(disable=True)
-        self.pipeline: AudioLDMPipeline = self.model.pipeline
+        self.model.pipeline.set_progress_bar_config(disable=True)  # type: ignore
+        self.pipeline: AudioLDM2Pipeline = self.model.pipeline  # type: ignore
         self.negative_prompt = negative_prompt
 
     def get_layers(self, layers_names: list[str]):
@@ -59,7 +59,7 @@ class PatchableAudioLDM2:
         seed: int = 42,
         audio_length_in_s: float | None = None,
     ):
-        generator = torch.Generator(self.model.pipeline.device).manual_seed(seed)
+        generator = torch.Generator(self.model.pipeline.device).manual_seed(seed)  # type: ignore
 
         latents = self.pipeline.prepare_latents(
             batch_size=n_prompts,
@@ -185,7 +185,7 @@ class PatchableAudioLDM2:
             seed=seed,
             trace=True,
         ):
-            with self.model.unet.all():
+            with self.model.unet.all():  # type: ignore
                 for layer_name in layers_to_ablate:
                     layer = self.get_layer(layer_name=layer_name)
                     layer.output[0][split_cfg_start:] = torch.zeros_like(layer.output[0][split_cfg_start:])
@@ -304,8 +304,8 @@ class PatchableAudioLDM2:
             outputs_clean.append(clean_batch_result["outputs"])
             outputs_patched.append(patched_batch_result["outputs"])
 
-        outputs_clean = np.concatenate(outputs_clean, axis=0)
-        outputs_patched = np.concatenate(outputs_patched, axis=0)
+        outputs_clean = np.concatenate(outputs_clean, axis=0)  # type: ignore
+        outputs_patched = np.concatenate(outputs_patched, axis=0)  # type: ignore
         return {"clean": outputs_clean, "patched": outputs_patched}
 
     def get_inputs_outputs(
@@ -361,7 +361,7 @@ class PatchableAudioLDM2:
                 outputs[layer_name].append(inputs_outputs_batch["outputs"][layer_name])
             audios.append(inputs_outputs_batch["audios"].audios)
 
-        audios = np.concatenate(audios, axis=0)
+        audios = np.concatenate(audios, axis=0)  # type: ignore
 
         return {
             "inputs": inputs,
@@ -420,5 +420,5 @@ class PatchableAudioLDM2:
             )
             outputs_ablated.append(ablated_batch_result["outputs"])
 
-        outputs_ablated = np.concatenate(outputs_ablated, axis=0)
+        outputs_ablated = np.concatenate(outputs_ablated, axis=0)  # type: ignore
         return {"ablated": outputs_ablated}

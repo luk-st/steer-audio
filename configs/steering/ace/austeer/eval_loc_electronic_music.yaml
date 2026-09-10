@@ -1,10 +1,10 @@
 method: austeer
-artifact: lukasz-staniszewski/ace-step-austeer-electronic_music-tf6tf7
+artifact: lukasz-staniszewski/ace-step-austeer-electronic-music-all
 concept: electronic_music
 layers: tf6tf7
 steer-mode: cond_only
-min-range: -5.33
-max-range: 6.23
+min-range: -5.8335
+max-range: 6.6693
 steps-per-side: 15
 method-kwargs: {k: 2048, mode: additive, renorm: true}
 duration: 30.0

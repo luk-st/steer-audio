@@ -3,10 +3,10 @@ artifact: lukasz-staniszewski/ace-step-austeer-tempo-all
 concept: tempo
 layers: all
 steer-mode: cond_only
-min-range: -2.8
-max-range: 3.4
+min-range: -1.5863
+max-range: 3.3586
 steps-per-side: 15
-method-kwargs: {k: 2048, mode: additive, renorm: true}
+method-kwargs: {k: 4096, mode: additive, renorm: true}
 duration: 30.0
 steps: 30
 guidance-scale: 5.0

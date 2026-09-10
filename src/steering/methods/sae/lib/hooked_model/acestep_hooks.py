@@ -139,6 +139,47 @@ def sae_intervention(
     return sae_out
 
 
+def build_weighted_steering_vectors(
+    W_dec, features_per_timestep, weights, normalize_to=None
+):
+    """Build per-timestep steering vectors with explicit per-feature weights.
+
+    Separates selection from weighting: the caller picks the features (e.g. by
+    TF-IDF) and supplies the weight table (e.g. mean activation on
+    concept-positive prompts), giving ``v_t = sum_i w_i * W_dec[i]``.
+
+    Args:
+        W_dec: (num_latents, d_in) SAE decoder matrix.
+        features_per_timestep: {timestep: [feature_idx, ...]}, same count per step.
+        weights: (num_timesteps, num_latents) per-feature weight table.
+        normalize_to: If set, rescale each timestep's weights to sum to this
+            value. Passing the feature count matches the unit-weighted vector's
+            total weight per step, isolating weight shape from per-step
+            magnitude.
+
+    Returns:
+        Dict mapping timestep -> (d_in,) tensor, ready for
+        ``ACEStepPrecomputedSteeringHook``.
+    """
+    steps = sorted(features_per_timestep)
+    idx = torch.tensor(
+        [features_per_timestep[t] for t in steps], device=W_dec.device
+    )  # (T, k)
+    assert idx.ndim == 2, idx.shape
+    n_steps, k = idx.shape
+
+    w = torch.gather(weights.to(W_dec.device)[steps], 1, idx).to(W_dec.dtype)
+    assert w.shape == (n_steps, k), w.shape
+    if normalize_to is not None:
+        totals = w.sum(dim=1, keepdim=True)
+        assert (totals != 0).all(), "cannot rescale a timestep whose weights sum to 0"
+        w = w * (normalize_to / totals)
+
+    vecs = torch.einsum("tk,tkd->td", w, W_dec[idx])
+    assert vecs.shape == (n_steps, W_dec.shape[1]), vecs.shape
+    return {t: vecs[i] for i, t in enumerate(steps)}
+
+
 def build_steering_vectors(sae, scores, top_k, sae_mode="sequence"):
     """Build per-timestep steering vectors from feature scores and SAE decoder weights.
 
@@ -395,6 +436,10 @@ class ACEStepTimestepInterventionHook:
 
         features_to_modify = self.features_per_timestep.get(timestep, [])
 
+        # A no-op intervention leaves the activation untouched, renorm included.
+        if multiplier == 0.0 or not features_to_modify:
+            return output
+
         to_intervene = output
         if self.renorm:
             norm_before = torch.norm(to_intervene, dim=2, keepdim=True)
@@ -444,6 +489,8 @@ class ACEStepPrecomputedSteeringHook:
         uncond_preds: If True, also intervene on unconditional CFG passes
         negate_for_uncond: If True (requires uncond_preds=True), negate the multiplier
             for unconditional CFG passes
+        renorm: If True, rescale the steered activation back to its original L2 norm
+            (per position, along the intervened dim) — same as CAA's renorm_after_steer
 
     Example:
         # Build vectors with custom weighting
@@ -460,6 +507,7 @@ class ACEStepPrecomputedSteeringHook:
         uncond_preds: bool = False,
         negate_for_uncond: bool = False,
         start_step: int = 0,
+        renorm: bool = False,
     ):
         assert sae_mode in ["sequence", "frequency"]
         assert not (negate_for_uncond is True and uncond_preds is False)
@@ -469,6 +517,7 @@ class ACEStepPrecomputedSteeringHook:
         self.sae_mode = sae_mode
         self.uncond_preds = uncond_preds
         self.negate_for_uncond = negate_for_uncond
+        self.renorm = renorm
         self.counter = -1
         self.start_step = int(start_step)
 
@@ -517,6 +566,11 @@ class ACEStepPrecomputedSteeringHook:
         # vec is (hidden_dim,) -> unsqueeze to (1, 1, hidden_dim)
         vec_broadcast = vec.unsqueeze(0).unsqueeze(0)
         result = to_modify + multiplier * vec_broadcast
+
+        if self.renorm:
+            norm_before = torch.norm(to_modify, dim=2, keepdim=True)
+            result = result / (torch.norm(result, dim=2, keepdim=True) + RENORM_EPS)
+            result = result * norm_before
 
         # Rearrange back
         if self.sae_mode == "frequency":

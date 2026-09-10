@@ -1,11 +1,11 @@
 method: caa
 method-kwargs: {renorm: true}
-artifact: lukasz-staniszewski/ace-step-caa-vocal_gender
+artifact: lukasz-staniszewski/ace-step-caa-vocal-gender
 concept: vocal_gender
 layers: tf6tf7
 steer-mode: cond_only
-min-range: -120.0
-max-range: 100.0
+min-range: -173.2238
+max-range: 124.7203
 steps-per-side: 15
 duration: 30.0
 steps: 30

@@ -1,8 +1,8 @@
 method: concept_slider
-artifact: lukasz-staniszewski/ace-step-cs-tempo-r8-all
+artifact: lukasz-staniszewski/ace-step-cs-tempo-r16-all
 concept: tempo
-min-range: -0.4
-max-range: 0.44
+min-range: -0.2311
+max-range: 0.235
 steps-per-side: 15
 duration: 30.0
 steps: 30

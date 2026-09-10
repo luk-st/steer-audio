@@ -1,10 +1,10 @@
 method: austeer
-artifact: lukasz-staniszewski/ace-step-austeer-vocal_gender-tf6tf7
+artifact: lukasz-staniszewski/ace-step-austeer-vocal-gender-all
 concept: vocal_gender
 layers: tf6tf7
 steer-mode: cond_only
-min-range: -5.5
-max-range: 3.9
+min-range: -5.2727
+max-range: 3.603
 steps-per-side: 15
 method-kwargs: {k: 2048, mode: additive, renorm: true}
 duration: 30.0

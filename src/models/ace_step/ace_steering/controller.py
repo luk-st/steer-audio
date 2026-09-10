@@ -1,8 +1,8 @@
-import numpy as np
-import torch
 import abc
 from collections import defaultdict
-from typing import Optional, Union, Tuple, List, Callable, Dict, Any
+from typing import Tuple, Union
+
+import torch
 
 
 def compute_num_cfg_passes(guidance_scale_text=0.0, guidance_scale_lyric=0.0):
@@ -47,7 +47,7 @@ class VectorControl(abc.ABC):
         raise NotImplementedError
 
     def __call__(self, vector, place_in_ace: str):
-        vector = self.forward(vector, place_in_ace)
+        vector = self.forward(vector, place_in_ace)  # type: ignore
         self.cur_att_layer += 1
         if self.cur_att_layer == self.num_att_layers:
             self.cur_att_layer = 0
@@ -108,9 +108,7 @@ class VectorStore(VectorControl):
         # 3 passes (with double guidance): cond, cond_text_only, uncond
         self.num_cfg_passes = num_cfg_passes  # If None, auto-detect from forward passes
         self.cfg_pass_count = 0  # Tracks which CFG pass we're in (0=cond, 1=text_only or uncond, 2=uncond)
-        self.save_only_cond = (
-            save_only_cond  # If True, only save activations from conditional pass
-        )
+        self.save_only_cond = save_only_cond  # If True, only save activations from conditional pass
 
         # Steering mode validation and setup
         valid_modes = [
@@ -122,9 +120,7 @@ class VectorStore(VectorControl):
             "both_uncond",
         ]
         if steer_mode not in valid_modes:
-            raise ValueError(
-                f"steer_mode must be one of {valid_modes}, got {steer_mode}"
-            )
+            raise ValueError(f"steer_mode must be one of {valid_modes}, got {steer_mode}")
         self.steer_mode = steer_mode
         self.renorm_after_steer = renorm_after_steer
         self.start_step = int(start_step)
@@ -142,7 +138,7 @@ class VectorStore(VectorControl):
     def get_empty_store():
         return defaultdict(list)
 
-    def forward(self, vector, place_in_ace: str):
+    def forward(self, vector, place_in_ace: str):  # type: ignore
         # Determine if and how to steer based on steering mode
         should_steer = False
         # Skip steering for the first `start_step` diffusion steps.
@@ -184,25 +180,28 @@ class VectorStore(VectorControl):
                     # Turbo version: single key for all steps
                     steer_key = first_key
                 else:
-                    # Full version: key per step and CFG pass
+                    # Full version: key per step and CFG pass.
+                    # With save_only_cond counting, actual_denoising_step is advanced at
+                    # the END of the cond pass, so during the later passes of the same
+                    # denoising step (cfg_pass_count > 0) it already points one step
+                    # ahead; correct the lookup back to the current step.
+                    lookup_step = self.actual_denoising_step
+                    if self.save_only_cond and self.cfg_pass_count > 0:
+                        lookup_step -= 1
                     if self.steer_mode == "cond_only" or self.steer_mode == "both_cond":
                         # Use conditional pass vectors (cfg_pass=0) for steering
-                        steer_key = (self.actual_denoising_step, 0)
+                        steer_key = (lookup_step, 0)
                     elif (
                         self.steer_mode == "uncond_only"
                         or self.steer_mode == "uncond_for_cond"
                         or self.steer_mode == "both_uncond"
                     ):
                         # Use unconditional pass vectors (last cfg_pass)
-                        uncond_pass = (
-                            (self.num_cfg_passes - 1)
-                            if self.num_cfg_passes is not None
-                            else 1
-                        )
-                        steer_key = (self.actual_denoising_step, uncond_pass)
+                        uncond_pass = (self.num_cfg_passes - 1) if self.num_cfg_passes is not None else 1
+                        steer_key = (lookup_step, uncond_pass)
                     elif self.steer_mode == "separate":
                         # Use vectors from current CFG pass
-                        steer_key = (self.actual_denoising_step, self.cfg_pass_count)
+                        steer_key = (lookup_step, self.cfg_pass_count)
             else:
                 # Steering vectors stored per denoising step only: key = denoising_step
                 # These were computed with save_only_cond=True (only conditional pass)
@@ -237,13 +236,9 @@ class VectorStore(VectorControl):
                     # Full version: key per step
                     steer_key = self.actual_denoising_step
 
-            steering_vector = self.steering_vectors[steer_key][place_in_ace][
-                len(self.step_store[place_in_ace])
-            ]
+            steering_vector = self.steering_vectors[steer_key][place_in_ace][len(self.step_store[place_in_ace])]  # type: ignore
             # Convert to tensor with same dtype as the input vector
-            steering_vector = torch.tensor(
-                steering_vector, dtype=vector.dtype, device=self.device
-            ).view(1, 1, -1)
+            steering_vector = torch.tensor(steering_vector, dtype=vector.dtype, device=self.device).view(1, 1, -1)
             # save current norm of vector components
             norm = torch.norm(vector, dim=2, keepdim=True)
 
@@ -254,7 +249,7 @@ class VectorStore(VectorControl):
                 # steering backward, i.e. removing notion from vector
 
                 # computing dot products between vector components and steering vector x
-                sim = torch.tensordot(vector, steering_vector, dims=([2], [2])).view(
+                sim = torch.tensordot(vector, steering_vector, dims=([2], [2])).view(  # type: ignore
                     vector.size()[0], vector.size()[1], 1
                 )
                 # we will steer back only if dot product is positive, i.e.
@@ -262,9 +257,7 @@ class VectorStore(VectorControl):
                 sim = torch.where(sim > 0, sim, 0)
 
                 # steer backward for beta*sim
-                vector = vector - (self.beta * sim) * steering_vector.expand(
-                    1, vector.size()[1], -1
-                )
+                vector = vector - (self.beta * sim) * steering_vector.expand(1, vector.size()[1], -1)
 
                 if self.renorm_after_steer:
                     # renormalize so that the norm of the steered vector is the same as of original one
@@ -272,9 +265,7 @@ class VectorStore(VectorControl):
                     vector = vector * norm
             else:
                 # steer forward, i.e. add a steering vector x multiplied by self.alpha
-                vector = vector + self.alpha * steering_vector.expand(
-                    1, vector.size()[1], -1
-                )
+                vector = vector + self.alpha * steering_vector.expand(1, vector.size()[1], -1)
 
                 if self.renorm_after_steer:
                     # renormalize so that the norm of the steered vector is the same as of original one
@@ -291,9 +282,7 @@ class VectorStore(VectorControl):
             # Convert to float32 first since numpy doesn't support bfloat16
             vector_to_store = vector.data.cpu().float().numpy()
             # No batch splitting needed - ACE does sequential passes, not batched
-            self.step_store[place_in_ace].append(
-                vector_to_store.mean(axis=0).mean(axis=0)
-            )
+            self.step_store[place_in_ace].append(vector_to_store.mean(axis=0).mean(axis=0))
 
         return vector
 
@@ -313,10 +302,7 @@ class VectorStore(VectorControl):
                 # No data - this was a non-conditional CFG pass
                 self.cfg_pass_count += 1
                 # Reset when we reach the expected number of CFG passes
-                if (
-                    self.num_cfg_passes is not None
-                    and self.cfg_pass_count >= self.num_cfg_passes
-                ):
+                if self.num_cfg_passes is not None and self.cfg_pass_count >= self.num_cfg_passes:
                     self.cfg_pass_count = 0
         else:
             # Saving all CFG passes - store separately for each pass
@@ -327,10 +313,7 @@ class VectorStore(VectorControl):
                 self.cfg_pass_count += 1
 
                 # When we complete all CFG passes, move to next denoising step
-                if (
-                    self.num_cfg_passes is not None
-                    and self.cfg_pass_count >= self.num_cfg_passes
-                ):
+                if self.num_cfg_passes is not None and self.cfg_pass_count >= self.num_cfg_passes:
                     self.cfg_pass_count = 0
                     self.actual_denoising_step += 1
 
@@ -343,24 +326,24 @@ def register_vector_control(model, controller, verbose=False, explicit_layers=No
         # overriding src.models.ace_step.ACE.acestep.models.attention.LinearTransformerBlock forward function
         def forward(
             hidden_states: torch.FloatTensor,
-            encoder_hidden_states: torch.FloatTensor = None,
-            attention_mask: torch.FloatTensor = None,
-            encoder_attention_mask: torch.FloatTensor = None,
-            rotary_freqs_cis: Union[torch.Tensor, Tuple[torch.Tensor]] = None,
-            rotary_freqs_cis_cross: Union[torch.Tensor, Tuple[torch.Tensor]] = None,
-            temb: torch.FloatTensor = None,
+            encoder_hidden_states: torch.FloatTensor | None = None,
+            attention_mask: torch.FloatTensor | None = None,
+            encoder_attention_mask: torch.FloatTensor | None = None,
+            rotary_freqs_cis: Union[torch.Tensor, Tuple[torch.Tensor]] | None = None,
+            rotary_freqs_cis_cross: Union[torch.Tensor, Tuple[torch.Tensor]] | None = None,
+            temb: torch.FloatTensor | None = None,
         ):
             N = hidden_states.shape[0]
 
             # step 1: AdaLN single
             if self.use_adaln_single:
                 shift_msa, scale_msa, gate_msa, shift_mlp, scale_mlp, gate_mlp = (
-                    self.scale_shift_table[None] + temb.reshape(N, 6, -1)
+                    self.scale_shift_table[None] + temb.reshape(N, 6, -1)  # type: ignore
                 ).chunk(6, dim=1)
 
             norm_hidden_states = self.norm1(hidden_states)
             if self.use_adaln_single:
-                norm_hidden_states = norm_hidden_states * (1 + scale_msa) + shift_msa
+                norm_hidden_states = norm_hidden_states * (1 + scale_msa) + shift_msa  # type: ignore
 
             # step 2: attention
             if not self.add_cross_attention:
@@ -383,7 +366,7 @@ def register_vector_control(model, controller, verbose=False, explicit_layers=No
                 )
 
             if self.use_adaln_single:
-                attn_output = gate_msa * attn_output
+                attn_output = gate_msa * attn_output  # type: ignore
             hidden_states = attn_output + hidden_states
 
             if self.add_cross_attention:
@@ -403,12 +386,12 @@ def register_vector_control(model, controller, verbose=False, explicit_layers=No
             # step 3: add norm
             norm_hidden_states = self.norm2(hidden_states)
             if self.use_adaln_single:
-                norm_hidden_states = norm_hidden_states * (1 + scale_mlp) + shift_mlp
+                norm_hidden_states = norm_hidden_states * (1 + scale_mlp) + shift_mlp  # type: ignore
 
             # step 4: feed forward
             ff_output = self.ff(norm_hidden_states)
             if self.use_adaln_single:
-                ff_output = gate_mlp * ff_output
+                ff_output = gate_mlp * ff_output  # type: ignore
 
             hidden_states = hidden_states + ff_output
 

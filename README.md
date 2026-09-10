@@ -382,20 +382,6 @@ python src/steering/eval/eval_steering_protocol.py \
     --concept piano
 ```
 
-### Preservation-vs-delta-alignment plots
-
-After running `eval_steering_protocol.py` on multiple methods for the same concept, plot the preservation (`LPAPS`-based) vs. delta-alignment curves and visualise the AUC integral:
-
-```bash
-# Alignment-vs-LPAPS curves per (concept, sign), one panel per method.
-python src/steering/eval/plot_alignment_lpaps_curves.py
-
-# Preservation × delta-alignment curves with the AUC area shaded.
-python src/steering/eval/plot_preservation_delta_alignment_auc.py
-```
-
-Both scripts read from the standard sweep tree (`outputs/<run>/ace_step/concept_<name>/{all|loc}/<method>/protocol_results/`) and write PDFs into `outputs/plots/`.
-
 ### AUC, Smoothness (CSM), Audio Quality
 
 `src/steering/eval/auc.py` is the single entry point that aggregates per-method `protocol_results/` directories into a LaTeX-ready table:
@@ -410,6 +396,24 @@ python src/steering/eval/auc.py \
     "outputs/eval/{caa,sae,austeer,concept_slider,freesliders,textemb,pci,tokemb}_piano/protocol_results" \
     --direction both \
     --auto_label
+```
+
+### Reproducing the paper's numbers
+
+`results/` ships the published per-alpha metrics — LPAPS, MuQ, CLAP, Audiobox
+aesthetics and the four decomposed-preservation axes (harmony, melody, rhythm,
+ssm) — for every method × concept, plus the layer-impact scores, in three CSVs
+(1.6 MB). See [`results/README.md`](results/README.md) for the schema. Two
+scripts turn them back into the paper's outputs:
+
+```bash
+# Per-concept tables + the average over all nine concepts.
+python scripts/results/make_tables.py --out tables.md
+python scripts/results/make_tables.py --axis harmony      # a decomposed axis
+python scripts/results/make_tables.py --localization      # layer impact I(l)
+
+# Preservation vs delta-alignment curves; the shaded area is the reported AUC.
+python scripts/results/plot_curves.py
 ```
 
 For a single-method or single-direction breakdown, narrow the glob and pass `--direction pos` or `--direction neg`. `--latex_only` emits a LaTeX `tabular` row for the paper.

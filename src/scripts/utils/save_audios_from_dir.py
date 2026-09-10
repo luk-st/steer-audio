@@ -1,6 +1,5 @@
-import shutil
-import time
 import argparse
+import shutil
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -8,7 +7,6 @@ import numpy as np
 import torch
 import torchaudio
 from tqdm import tqdm
-import time
 
 SAMPLE_RATE = 44100
 
@@ -62,6 +60,7 @@ def del_audios_dir(path: Path) -> None:
     """Deletes the audios directory."""
     print(f"Deleting audios directory: {path}")
     shutil.rmtree(path)
+
 
 import argparse
 

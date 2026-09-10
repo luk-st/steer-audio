@@ -1,2 +1,0 @@
-layers_to_patch:
-  - '.cfm_model.transformer.transformer_blocks.6.self_attn' 

@@ -1,0 +1,8 @@
+method: stable_audio_caa
+artifact: steering_vectors/caa_stable_audio/stable_audio_piano_allTrue_normTrue_all
+concept: piano
+alphas: [-4, -2, 0, 2, 4]
+duration: 10.0
+steps: 100
+guidance-scale: 7.0
+save-dir: outputs/eval/stable_audio_caa_piano

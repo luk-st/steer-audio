@@ -24,7 +24,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterable
 
-
 PAPER_URL = "https://huggingface.co/papers/2602.11910"
 PAPER_SECTION = (
     "## Paper\n\n"
@@ -126,11 +125,7 @@ class SteeringVectorArtifact:
         treated as a local path; otherwise it's an HF repo id.
         """
         local = Path(repo_id)
-        looks_local = (
-            local.exists()
-            or repo_id.count("/") > 1
-            or repo_id.startswith((".", "/", "~"))
-        )
+        looks_local = local.exists() or repo_id.count("/") > 1 or repo_id.startswith((".", "/", "~"))
         if looks_local:
             if not local.exists():
                 raise FileNotFoundError(
@@ -419,6 +414,7 @@ def push_sae_to_hub(
           README.md
     """
     import tempfile
+
     from huggingface_hub import HfApi, create_repo
 
     create_repo(repo_id, private=private, exist_ok=True, repo_type="model")
@@ -427,9 +423,7 @@ def push_sae_to_hub(
         tmp_root = Path(tmp)
         target = tmp_root / hookpoint if hookpoint else tmp_root
         sae.save_to_disk(target)
-        (tmp_root / "README.md").write_text(
-            _render_sae_card(sae, repo_id, hookpoint, tags=tags, extra=extra_metadata)
-        )
+        (tmp_root / "README.md").write_text(_render_sae_card(sae, repo_id, hookpoint, tags=tags, extra=extra_metadata))
         api = HfApi()
         api.upload_folder(
             repo_id=repo_id,
@@ -458,9 +452,7 @@ def _render_sae_card(
     all_tags = sorted(set(base_tags) | set(tags or []))
     cfg_yaml = "\n".join(f"  - {t}" for t in all_tags)
     cfg_dict = sae.cfg.to_dict() if hasattr(sae, "cfg") else {}
-    meta = json.dumps(
-        {**cfg_dict, **(extra or {}), "d_in": getattr(sae, "d_in", None)}, indent=2
-    )
+    meta = json.dumps({**cfg_dict, **(extra or {}), "d_in": getattr(sae, "d_in", None)}, indent=2)
     hp_line = f"\n**Hookpoint:** `{hookpoint}`" if hookpoint else ""
     return (
         f"---\n"

@@ -1,8 +1,8 @@
 method: freesliders
 artifact: ""
 concept: piano
-min-range: -2.25
-max-range: 2.65
+min-range: -2.3005
+max-range: 2.9665
 steps-per-side: 15
 method-kwargs: {split_step: 0, target_layers: tf6tf7}
 duration: 30.0

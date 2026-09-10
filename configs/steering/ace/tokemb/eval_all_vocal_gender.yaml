@@ -1,8 +1,8 @@
 method: tokemb
-artifact: lukasz-staniszewski/ace-step-tokemb-vocal_gender
+artifact: lukasz-staniszewski/ace-step-tokemb-vocal-gender
 concept: vocal_gender
-min-range: -8.0
-max-range: 5.3
+min-range: -7.9128
+max-range: 5.6653
 steps-per-side: 15
 method-kwargs: {te_split_step: 0, target_layers: all}
 duration: 30.0

@@ -1,8 +1,8 @@
 method: tokemb
-artifact: lukasz-staniszewski/ace-step-tokemb-vocal_style
+artifact: lukasz-staniszewski/ace-step-tokemb-vocal-style
 concept: vocal_style
-min-range: -4.8
-max-range: 10.4
+min-range: -4.7621
+max-range: 10.6648
 steps-per-side: 15
 method-kwargs: {te_split_step: 0, target_layers: tf6tf7}
 duration: 30.0

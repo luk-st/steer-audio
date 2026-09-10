@@ -16,4 +16,5 @@ scheduler_type: "euler"
 cfg_type: "apg"
 omega_scale: 7.0
 save_clean_audio: false
+save_mono: true
 pad_to_max_len: 128

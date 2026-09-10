@@ -4,8 +4,8 @@ artifact: lukasz-staniszewski/ace-step-caa-violin
 concept: violin
 layers: tf6tf7
 steer-mode: cond_only
-min-range: -129.02
-max-range: 144.0
+min-range: -136.9527
+max-range: 150.0571
 steps-per-side: 15
 duration: 30.0
 steps: 30

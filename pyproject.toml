@@ -6,7 +6,6 @@ readme = "README.md"
 requires-python = ">=3.11,<3.12"
 license = { text = "MIT" }
 dependencies = [
-    "audioldm-eval",
     "absl-py==2.3.1",
     "accelerate==1.5.2",
     "aiofiles==24.1.0",
@@ -68,7 +67,6 @@ dependencies = [
     "encodec==0.1.1",
     "exceptiongroup==1.3.0",
     "executing==2.2.0",
-    "fadtk==1.1.0",
     "fastapi==0.116.1",
     "fastjsonschema==2.21.2",
     "ffmpeg==1.4",
@@ -313,7 +311,8 @@ dependencies = [
     "yt-dlp==2025.5.22",
     "zipp==3.23.0",
     "laion_clap==1.1.6",
-    "ssr-eval==0.0.7",    "arxiv2markdown==0.1.0",
+    "ssr-eval==0.0.7",
+    "arxiv2markdown==0.1.0",
     "demucs==4.0.1",
     "dora_search==0.1.12",
     "lameenc==1.8.2",
@@ -331,6 +330,8 @@ dependencies = [
     "setuptools>=68,<81",
     "tiktoken==0.12.0",
     "treetable==0.2.6",
+    "xrfm>=0.4.5",
+    "mir-eval>=0.8.2",
 ]
 
 [build-system]
@@ -349,9 +350,10 @@ namespaces = false
 # --- uv-specific resolution config -----------------------------------------
 [tool.uv]
 # Real upstream conflicts that pip silently ignored. These force the resolver
-# to accept the working state reproduced from `requirements/h82/`.
-# 1. fadtk==1.1.0 declares numpy<2; thinc==8.3.6 (transitive of spacy 3.8) declares
-#    numpy>=2. We pin numpy<2 (matches what was actually installed in h82).
+# to accept the working state the benchmark was produced under.
+# 1. numpy stays <2 to match what was actually installed -- every benchmark
+#    artifact was produced under numpy 1.x, so the pin is kept for reproducibility
+#    even though the package that originally demanded it (fadtk) is gone.
 # 2. laion_clap and ssr-eval declare overly-tight transitive bounds that
 #    conflict with the rest of the pinned set; pip-install historically used
 #    --no-deps for them.
@@ -361,16 +363,12 @@ override-dependencies = [
 
 [tool.uv.sources]
 pytorchvideo = { git = "https://github.com/facebookresearch/pytorchvideo.git", rev = "6cdc929315aab1b5674b6dcf73b16ec99147735f" }
-# Vendored locally because the upstream pinned commit references a submodule
-# (src/hear21passt) that isn't declared in .gitmodules, which makes uv's
-# `git submodule update --init` abort. Pip silently ignored this.
-audioldm-eval = { path = "external_codebases/audioldm_eval" }
 
 # laion_clap and ssr-eval declare poisoned/legacy transitive dependencies
 # (e.g. ssr-eval -> wave -> mysql-python; laion_clap pins exact transformers).
 # Historically installed with `pip install --no-deps`. The equivalent under
 # uv is to override their reported metadata so the resolver treats them as
-# having no dependencies, matching the working h82/ install.
+# having no dependencies, matching the working install.
 [[tool.uv.dependency-metadata]]
 name = "ssr-eval"
 version = "0.0.7"
@@ -409,7 +407,13 @@ project-excludes = [
     "**/__pycache__",
 ]
 search-path = [
+    ".",
     "src/models/ace_step/ACE",
     "sae",
     "editing/AudioEditingCode",
+]
+
+[dependency-groups]
+dev = [
+    "pikepdf>=10.13.0.post1",
 ]

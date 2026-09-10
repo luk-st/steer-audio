@@ -1,12 +1,12 @@
 method: austeer
-artifact: lukasz-staniszewski/ace-step-austeer-rock_genre-tf6tf7
+artifact: lukasz-staniszewski/ace-step-austeer-rock-genre-all
 concept: rock_genre
 layers: tf6tf7
 steer-mode: cond_only
-min-range: -3.32
-max-range: 4.36
+min-range: -5.5333
+max-range: 2.1524
 steps-per-side: 15
-method-kwargs: {k: 2048, mode: additive, renorm: true}
+method-kwargs: {k: 5120, mode: additive, renorm: true}
 duration: 30.0
 steps: 30
 guidance-scale: 5.0

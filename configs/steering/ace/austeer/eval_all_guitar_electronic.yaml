@@ -1,10 +1,10 @@
 method: austeer
-artifact: lukasz-staniszewski/ace-step-austeer-guitar_electronic-all
+artifact: lukasz-staniszewski/ace-step-austeer-guitar-electronic-all
 concept: guitar_electronic
 layers: all
 steer-mode: cond_only
-min-range: -4.89
-max-range: 4.89
+min-range: -4.8158
+max-range: 4.7401
 steps-per-side: 15
 method-kwargs: {k: 2048, mode: additive, renorm: true}
 duration: 30.0

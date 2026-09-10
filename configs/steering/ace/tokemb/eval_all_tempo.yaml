@@ -1,8 +1,8 @@
 method: tokemb
 artifact: lukasz-staniszewski/ace-step-tokemb-tempo
 concept: tempo
-min-range: -1.02
-max-range: 1.6
+min-range: -8.3924
+max-range: 3.4235
 steps-per-side: 15
 method-kwargs: {te_split_step: 0, target_layers: all}
 duration: 30.0

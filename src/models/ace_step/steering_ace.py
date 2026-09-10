@@ -1,18 +1,13 @@
 # based on https://github.com/ace-step/ACE-Step/blob/main/acestep/pipeline_ace_step.py
 
 import os
-
-import torch
-import torchaudio
-from diffusers.utils.torch_utils import randn_tensor
 from typing import Literal
 
+from diffusers.utils.torch_utils import randn_tensor
+
 from src.models.ace_step.ACE.acestep.cpu_offload import cpu_offload
-from src.models.ace_step.pipeline_ace import SimpleACEStepPipeline, SAMPLE_RATE
-from src.models.ace_step.ace_steering.controller import (
-    VectorStore,
-    register_vector_control,
-)
+from src.models.ace_step.ace_steering.controller import VectorStore, register_vector_control
+from src.models.ace_step.pipeline_ace import SAMPLE_RATE, SimpleACEStepPipeline
 
 
 class SteeredACEStepPipeline(SimpleACEStepPipeline):
@@ -183,7 +178,7 @@ class SteeredACEStepPipeline(SimpleACEStepPipeline):
                 for net__ in net_.children():
                     store_recr(net__, place_in_ace)
 
-        for net in self.ace_step_transformer.transformer_blocks.named_children():
+        for net in self.ace_step_transformer.transformer_blocks.named_children():  # type: ignore
             name = "tf" + net[0]
             store_recr(net[1], name)
 
@@ -200,7 +195,7 @@ class SteeredACEStepPipeline(SimpleACEStepPipeline):
                 for net__ in net_.children():
                     restore_recr(net__, place_in_ace)
 
-        for net in self.ace_step_transformer.transformer_blocks.named_children():
+        for net in self.ace_step_transformer.transformer_blocks.named_children():  # type: ignore
             name = "tf" + net[0]
             restore_recr(net[1], name)
 

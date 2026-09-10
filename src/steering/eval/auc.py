@@ -3,7 +3,7 @@
 Compute AUC-based steering evaluation metrics from protocol_results directories.
 
 Alignment metrics (MuQ-T, CLAP):
-  - X axis: LPAPS_max - LPAPS  (flipped: 0 = max distortion, LPAPS_max = no distortion)
+  - X axis: LPAPS (integrated in sweep order, i.e. increasing |alpha|)
   - Y axis: delta — sign-corrected so higher = better:
       pos: delta = value(alpha) - baseline
       neg: delta = baseline - value(alpha)
@@ -84,15 +84,29 @@ def get_baseline(df: pd.DataFrame, col: str) -> float:
     return float(row[col].iloc[0])
 
 
-def compute_auc(lpaps: np.ndarray, delta: np.ndarray, cutoff: float) -> float:
-    """Integrate delta over flipped LPAPS axis up to cutoff."""
+def compute_auc(
+    lpaps: np.ndarray,
+    delta: np.ndarray,
+    cutoff: float,
+    abs_alpha: Optional[np.ndarray] = None,
+) -> float:
+    """Integrate delta over LPAPS up to cutoff, following the sweep.
+
+    Points are traversed in order of increasing ``|alpha|`` — the order the sweep
+    actually produced them — so this is the path integral of ``delta`` over LPAPS.
+    Where LPAPS backtracks (it is not perfectly monotone in ``|alpha|``), the
+    backward segment subtracts area and the following forward segment re-adds it,
+    which is the faithful treatment. Sorting by LPAPS instead would silently
+    reorder the sweep into a monotone curve that was never measured.
+    """
     mask = lpaps <= cutoff + 1e-9
     lp, dv = lpaps[mask], delta[mask]
     if len(lp) < 2:
         return float("nan")
-    x = cutoff - lp
-    order = np.argsort(x)
-    return float(_trapezoid(dv[order], x[order]))
+    if abs_alpha is not None:
+        order = np.argsort(abs_alpha[mask], kind="stable")
+        lp, dv = lp[order], dv[order]
+    return float(_trapezoid(dv, lp))
 
 
 def get_lpaps_max(results_dir: Path, direction: str) -> float:
@@ -108,6 +122,20 @@ def global_cutoff(dirs: List[Path], direction: str) -> float:
     return float(min(valid)) if valid else float("nan")
 
 
+def pci_cutoff(root: Path, concept: str, direction: str) -> float:
+    """Paper cutoff: min(max-LPAPS of PCI-all, PCI-loc) for one direction.
+
+    PCI defines the shared preservation ceiling; whichever of the global
+    (``pci_all``) or localized (``pci_loc``) PCI run reaches the lower max
+    LPAPS at its strongest alpha sets the cutoff for that direction.
+    """
+    root = Path(root)
+    dirs = [root / f"pci_all_{concept}" / "protocol_results",
+            root / f"pci_loc_{concept}" / "protocol_results"]
+    dirs = [d for d in dirs if (d / "lpaps.csv").exists()]
+    return global_cutoff(dirs, direction)
+
+
 def fmt(v, decimals: int = 3) -> str:
     if v is None or (isinstance(v, float) and (math.isnan(v) or math.isinf(v))):
         return "?.??"
@@ -119,12 +147,19 @@ def load_and_merge_alignment(
     direction: str,
     metric: str,
     lpaps_cutoff: float,
+    add_cutoff_boundary: bool = False,
 ) -> Optional[pd.DataFrame]:
     """
     Load lpaps and alignment CSVs, merge on alpha, filter to direction,
     and truncate to alphas where LPAPS <= lpaps_cutoff.
-    Returns DataFrame with columns: alpha, lpaps, val
-    or None if data is missing/empty.
+
+    If ``add_cutoff_boundary``, append one interpolated row at exactly
+    ``lpaps == lpaps_cutoff`` — ``val`` linearly interpolated between the last
+    alpha below the cutoff and the first alpha above it — so the AUC integrates
+    over exactly [0, cutoff] and the final [14th-alpha -> cutoff] segment is
+    included (identical preservation interval across methods). Requires a point
+    above the cutoff to bracket it; if none exists the curve is left as-is.
+    Returns DataFrame with columns: alpha, lpaps, val or None if missing/empty.
     """
     lpaps_df = load_csv_safe(results_dir / "lpaps.csv")
     align_df = load_csv_safe(results_dir / f"{metric}.csv")
@@ -142,12 +177,21 @@ def load_and_merge_alignment(
     if merged.empty:
         return None
 
-    # Truncate to alphas where LPAPS <= cutoff
-    merged = merged[merged["lpaps"] <= lpaps_cutoff + 1e-9]
-    if merged.empty:
+    below = merged[merged["lpaps"] <= lpaps_cutoff + 1e-9]
+    if below.empty:
         return None
+    above = merged[merged["lpaps"] > lpaps_cutoff + 1e-9]
 
-    return merged.sort_values("alpha").reset_index(drop=True)
+    if add_cutoff_boundary and not above.empty:
+        b = below.sort_values("lpaps").iloc[-1]   # last alpha below cutoff
+        a = above.sort_values("lpaps").iloc[0]    # first alpha above cutoff
+        if a["lpaps"] - b["lpaps"] > 1e-12:
+            frac = (lpaps_cutoff - b["lpaps"]) / (a["lpaps"] - b["lpaps"])
+            val_cut = float(b["val"]) + frac * (float(a["val"]) - float(b["val"]))
+            boundary = pd.DataFrame([{"alpha": a["alpha"], "lpaps": lpaps_cutoff, "val": val_cut}])
+            below = pd.concat([below, boundary], ignore_index=True)
+
+    return below.sort_values("alpha").reset_index(drop=True)
 
 
 # ---------------------------------------------------------------------------
@@ -173,12 +217,17 @@ def compute_alignment_auc_direction(
     out["lpaps_max"] = float(lpaps_df["mean"].max())
 
     for metric in alignment_metrics:
-        merged = load_and_merge_alignment(results_dir, direction, metric, cutoff)
+        merged = load_and_merge_alignment(
+            results_dir, direction, metric, cutoff, add_cutoff_boundary=True
+        )
         if merged is None:
             continue
         baseline = float(merged.loc[merged["alpha"].abs().idxmin(), "val"])
         delta = sign * (merged["val"].values - baseline)
-        out[metric] = compute_auc(merged["lpaps"].values, delta, cutoff)
+        out[metric] = compute_auc(
+            merged["lpaps"].values, delta, cutoff,
+            abs_alpha=merged["alpha"].abs().values,
+        )
 
     return out
 

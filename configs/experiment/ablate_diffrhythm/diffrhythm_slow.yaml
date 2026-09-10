@@ -1,7 +1,0 @@
-# @package _global_
-
-defaults:
-  - override /patch_config: diffrhythm_ablate
-  - override /patch_layers: diffrhythm/self_attn/none
-  - override /patch_data: musiccaps/slow_small
-  - override /patch_model: diffrhythm_patch

@@ -44,7 +44,7 @@ output = uncond + w·(cond - uncond) + w·α·Δ
 
 ```python
 controller = VectorStore(
-    steering_vectors=vectors,  # Must be computed with --save_all_cfg_passes
+    steering_vectors=vectors,  # Needs all CFG passes saved (unified compute default)
     steer_mode='uncond_only',
     alpha=10.0
 )
@@ -73,7 +73,7 @@ output = (uncond + α·Δ) + w·(cond - uncond - α·Δ)
 - Experimental: opposite of `cond_only`
 
 **Requirements:**
-- Vectors must be computed with `--save_all_cfg_passes`
+- Vectors must include all CFG passes (`save_all_cfg_passes=True`, the unified compute default)
 - Need uncond activations from generation
 
 ---
@@ -83,7 +83,7 @@ output = (uncond + α·Δ) + w·(cond - uncond - α·Δ)
 
 ```python
 controller = VectorStore(
-    steering_vectors=vectors,  # Must be computed with --save_all_cfg_passes
+    steering_vectors=vectors,  # Needs all CFG passes saved (unified compute default)
     steer_mode='uncond_for_cond',
     alpha=10.0
 )
@@ -110,7 +110,7 @@ output = uncond + w·(cond + α·Δ - uncond)
 - Comparing unconditional vs conditional concept representations
 
 **Requirements:**
-- Vectors must be computed with `--save_all_cfg_passes`
+- Vectors must include all CFG passes (`save_all_cfg_passes=True`, the unified compute default)
 - Need uncond activations from generation
 
 ---
@@ -120,7 +120,7 @@ output = uncond + w·(cond + α·Δ - uncond)
 
 ```python
 controller = VectorStore(
-    steering_vectors=vectors,  # Must be computed with --save_all_cfg_passes
+    steering_vectors=vectors,  # Needs all CFG passes saved (unified compute default)
     steer_mode='separate',
     alpha=10.0
 )
@@ -148,7 +148,7 @@ output = (uncond + α·Δ_uncond) + w·(cond + α·Δ_cond - uncond - α·Δ_unc
 - For research/exploration of CFG pass differences
 
 **Requirements:**
-- Vectors must be computed with `--save_all_cfg_passes`
+- Vectors must include all CFG passes (`save_all_cfg_passes=True`, the unified compute default)
 - More expensive: requires saving activations from all passes
 
 ---
@@ -191,7 +191,7 @@ output = (uncond + α·Δ) + w·(cond + α·Δ - uncond - α·Δ)
 
 ```python
 controller = VectorStore(
-    steering_vectors=vectors,  # Must be computed with --save_all_cfg_passes
+    steering_vectors=vectors,  # Needs all CFG passes saved (unified compute default)
     steer_mode='both_uncond',
     alpha=10.0
 )
@@ -219,7 +219,7 @@ output = (uncond + α·Δ) + w·(cond + α·Δ - uncond - α·Δ)
 - Experimental: comparing conditional vs unconditional concept directions
 
 **Requirements:**
-- Vectors must be computed with `--save_all_cfg_passes`
+- Vectors must include all CFG passes (`save_all_cfg_passes=True`, the unified compute default)
 - Need uncond activations from generation
 
 ---
@@ -285,36 +285,39 @@ output = uncond + w·(cond - uncond) + α·Δ_uncond + w·α·(Δ_cond - Δ_unco
 
 ### Computing Vectors
 
-**For `cond_only` or `both_cond`:**
+Vectors are computed by the unified runner:
+
 ```bash
-python compute_steering_vectors.py \
-    --mode gender \
-    --concept_pos "female vocals" \
-    --concept_neg "male vocals" \
-    --num_prompts 50 \
-    --save_dir steering_vectors/
+python src/steering/run_compute.py --config configs/steering/ace/caa/compute_piano.yaml
 ```
 
-**For `uncond_only`, `uncond_for_cond`, `both_uncond`, or `separate`:**
-```bash
-python compute_steering_vectors.py \
-    --mode gender \
-    --concept_pos "female vocals" \
-    --concept_neg "male vocals" \
-    --num_prompts 50 \
-    --save_all_cfg_passes \
-    --save_dir steering_vectors/
-```
+The CAA scorer saves **all CFG passes by default** (``save_all_cfg_passes=True`` in
+``compute_sv_caa``), so the resulting artifact supports every mode below, including
+the uncond-based ones.
 
 ### Loading and Using
 
-```python
-import pickle
-from controller import VectorStore, register_vector_control
+The public API loads an artifact (local dir or HF repo id) and handles
+registration for you:
 
-# Load vectors
-with open('steering_vectors/ace_gender_vocal_gender_male_vocals.pkl', 'rb') as f:
-    vectors = pickle.load(f)
+```python
+from src.steering import SteerableACEModel, CAASteeringController
+
+model = SteerableACEModel(device="cuda")
+model.pipeline.load()
+ctrl = CAASteeringController.from_pretrained(
+    "lukasz-staniszewski/ace-step-caa-piano", alpha=20, steer_mode="cond_only",
+)
+with model.steer(ctrl):
+    audio = model.generate(prompt="instrumental music", lyrics="[inst]",
+                           audio_duration=10.0, infer_step=30, manual_seed=0,
+                           return_type="audio")
+```
+
+For direct use of this module (what the wrapper does under the hood):
+
+```python
+from src.models.ace_step.ace_steering.controller import VectorStore, register_vector_control
 
 # Mode 1: cond_only (default)
 controller = VectorStore(
@@ -324,7 +327,7 @@ controller = VectorStore(
     device='cuda'
 )
 
-# Mode 2: uncond_only (needs vectors computed with --save_all_cfg_passes)
+# Mode 2: uncond_only (needs all CFG passes in the artifact)
 controller = VectorStore(
     steering_vectors=vectors,
     steer_mode='uncond_only',
@@ -332,7 +335,7 @@ controller = VectorStore(
     device='cuda'
 )
 
-# Mode 3: uncond_for_cond (needs vectors computed with --save_all_cfg_passes)
+# Mode 3: uncond_for_cond (needs all CFG passes in the artifact)
 controller = VectorStore(
     steering_vectors=vectors,
     steer_mode='uncond_for_cond',
@@ -340,7 +343,7 @@ controller = VectorStore(
     device='cuda'
 )
 
-# Mode 4: separate (needs vectors computed with --save_all_cfg_passes)
+# Mode 4: separate (needs all CFG passes in the artifact)
 controller = VectorStore(
     steering_vectors=vectors,
     steer_mode='separate',
@@ -356,7 +359,7 @@ controller = VectorStore(
     device='cuda'
 )
 
-# Mode 6: both_uncond (needs vectors computed with --save_all_cfg_passes)
+# Mode 6: both_uncond (needs all CFG passes in the artifact)
 controller = VectorStore(
     steering_vectors=vectors,
     steer_mode='both_uncond',
@@ -373,12 +376,12 @@ audio = pipe.generate(prompt="rock music", ...)
 
 To determine which mode works best for your use case:
 
-1. **Compute vectors once** (without `--save_all_cfg_passes`)
+1. **Compute vectors once** with the unified runner (all CFG passes are saved by default)
 2. **Test `cond_only` vs `both_cond`** with same α across different CFG scales
 3. **Hypothesis:**
    - `cond_only`: Need to adjust α when changing CFG
    - `both_cond`: Same α works across CFG scales
-4. **If you need maximum flexibility**, compute with `--save_all_cfg_passes` and test all modes:
+4. **All modes are testable from one artifact**, since the compute saves every CFG pass:
    - Compare conditional vs unconditional concept directions
    - Test CFG scaling behavior differences
    - Explore `uncond_for_cond` vs `cond_only` and `both_uncond` vs `both_cond`
@@ -388,7 +391,7 @@ To determine which mode works best for your use case:
 ```python
 # Test CFG-scaled modes (using cond vectors)
 modes_cond = ['cond_only', 'both_cond']
-# Test CFG-scaled modes (using uncond vectors) - requires --save_all_cfg_passes
+# Test CFG-scaled modes (using uncond vectors)
 modes_uncond = ['uncond_only', 'uncond_for_cond', 'both_uncond']
 
 cfg_scales = [1.0, 3.0, 5.0, 7.5]
@@ -408,7 +411,7 @@ for mode in modes_cond:
             # - cond_only: steering increases with CFG (w×α)
             # - both_cond: steering independent of CFG (α)
 
-# Test with unconditional vectors (requires --save_all_cfg_passes)
+# Test with unconditional vectors
 for mode in modes_uncond:
     for cfg in cfg_scales:
         for alpha in alphas:
@@ -464,7 +467,7 @@ vectors = {
 ## Questions?
 
 - **Which mode is best?** Depends on your goal. Start with `cond_only`, then try `both_cond`.
-- **Do I need `--save_all_cfg_passes`?** Only for `uncond_only`, `uncond_for_cond`, `both_uncond`, and `separate` modes. Otherwise no.
+- **Do I need all CFG passes in the artifact?** Only for `uncond_only`, `uncond_for_cond`, `both_uncond`, and `separate` modes; the unified compute saves them by default.
 - **Can I switch modes with same vectors?**
   - Yes, between `cond_only` and `both_cond` (using cond vectors)
   - Yes, between `uncond_only`, `uncond_for_cond`, and `both_uncond` (using uncond vectors)

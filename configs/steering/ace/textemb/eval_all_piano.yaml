@@ -1,8 +1,8 @@
 method: textemb
 artifact: ""
 concept: piano
-min-range: -0.18
-max-range: 0.98
+min-range: -0.1852
+max-range: 1.0523
 steps-per-side: 15
 method-kwargs: {te_split_step: 0, target_layers: all}
 duration: 30.0

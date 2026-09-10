@@ -1,11 +1,11 @@
 method: caa
 method-kwargs: {renorm: true}
-artifact: lukasz-staniszewski/ace-step-caa-rock_genre
+artifact: lukasz-staniszewski/ace-step-caa-rock-genre
 concept: rock_genre
 layers: all
 steer-mode: cond_only
-min-range: -47.79
-max-range: 62.4
+min-range: -51.0405
+max-range: 65.6592
 steps-per-side: 15
 duration: 30.0
 steps: 30

@@ -6,8 +6,6 @@ defaults:
   - patch_model: audioldm2_patch
 
 metrics:
-  fad: false
-  alignment: false
   clap: true
   clap_music: true
   muqt: true

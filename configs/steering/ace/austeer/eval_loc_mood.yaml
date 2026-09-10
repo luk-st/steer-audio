@@ -1,12 +1,12 @@
 method: austeer
-artifact: lukasz-staniszewski/ace-step-austeer-mood-tf6tf7
+artifact: lukasz-staniszewski/ace-step-austeer-mood-all
 concept: mood
 layers: tf6tf7
 steer-mode: cond_only
-min-range: -4.2
-max-range: 2.6
+min-range: -2.493
+max-range: 2.304
 steps-per-side: 15
-method-kwargs: {k: 2048, mode: additive, renorm: true}
+method-kwargs: {k: 5120, mode: additive, renorm: true}
 duration: 30.0
 steps: 30
 guidance-scale: 5.0

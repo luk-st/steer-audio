@@ -1,8 +1,8 @@
 method: textemb
 artifact: ""
 concept: mood
-min-range: -0.45
-max-range: 0.35
+min-range: -0.4392
+max-range: 0.359
 steps-per-side: 15
 method-kwargs: {te_split_step: 0, target_layers: all}
 duration: 30.0

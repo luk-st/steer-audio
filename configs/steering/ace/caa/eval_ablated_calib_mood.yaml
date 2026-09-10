@@ -1,0 +1,12 @@
+method: caa
+method-kwargs: {renorm: true}
+artifact: lukasz-staniszewski/ace-step-caa-mood
+concept: mood
+layers: no_tf6tf7
+steer-mode: cond_only
+alphas: [0.0, 5.673, 11.345, 17.018, 22.691, 28.364, 34.036, 39.709, 45.382, 51.055, 56.727, 62.4]
+duration: 30.0
+steps: 30
+guidance-scale: 5.0
+seed: 2115
+save-dir: outputs/eval/caa_ablated_calib_mood

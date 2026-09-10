@@ -1,8 +1,8 @@
 method: concept_slider
-artifact: lukasz-staniszewski/ace-step-cs-vocal_gender-r8-tf6tf7
+artifact: lukasz-staniszewski/ace-step-cs-vocal-gender-r4-tf6tf7
 concept: vocal_gender
-min-range: -0.8
-max-range: 0.7
+min-range: -1.922
+max-range: 1.5328
 steps-per-side: 15
 duration: 30.0
 steps: 30

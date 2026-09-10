@@ -1,8 +1,8 @@
 method: freesliders
 artifact: ""
 concept: rock_genre
-min-range: -1.87
-max-range: 2.08
+min-range: -2.0673
+max-range: 2.11
 steps-per-side: 15
 method-kwargs: {split_step: 0, target_layers: tf6tf7}
 duration: 30.0

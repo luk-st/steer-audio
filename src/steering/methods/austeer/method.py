@@ -88,7 +88,7 @@ class AUSteerSteeringController(Controller):
             austeer_vectors=self.austeer_vectors,
             k=self.k,
             alpha=self.alpha,
-            active_layers=self.active_layers,
+            active_layers=self.target_layers,
             mode=self.mode,
             device=self.device,
             steer=True,
