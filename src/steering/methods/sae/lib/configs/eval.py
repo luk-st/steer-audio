@@ -1,4 +1,3 @@
-# ABOUTME: Per-concept alignment prompts for the steering eval protocol, stated in full.
 CONCEPT_TO_EVAL_PROMPTS = {
     "piano": {
         "clap": "a piano song",

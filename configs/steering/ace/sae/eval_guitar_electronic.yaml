@@ -1,7 +1,3 @@
-# ABOUTME: SAE eval config for 'guitar_electronic' at its HOLDOUT-OPTIMAL per-layer top-k
-# ABOUTME: (tf6=5, tf7=50) with renorm — the argmax of the 2D sweep's composite score over
-# ABOUTME: MuQ-T/CLAP x both directions. Ranges seeded from eval_locren_guitar_electronic x this arm's
-# ABOUTME: alpha_max ratio vs the (20,20) arm; probe-calibrated in-job.
 method: sae
 concept: guitar_electronic
 min-range: -16.1788

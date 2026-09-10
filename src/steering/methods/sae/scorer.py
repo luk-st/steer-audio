@@ -161,9 +161,8 @@ class SAEScoresScorer(Scorer):
         out = Path(output_dir)
         out.mkdir(parents=True, exist_ok=True)
 
-        # reuse_activations: score-only from precomputed activations (e.g. WCSS-collected,
-        # staged under output_dir). Skips the bf16, hardware-sensitive model run; only the
-        # deterministic fp32 scoring below runs. Model/prompts/latents aren't needed then.
+        # reuse_activations: score only, from activations already staged under
+        # output_dir. Model, prompts and latents are not needed in that case.
         pos_prompts = neg_prompts = latents = hooked = None
         if not reuse_activations:
             if model is None:
@@ -192,9 +191,7 @@ class SAEScoresScorer(Scorer):
             with torch.no_grad():
                 if acts.dim() == 2:
                     acts = acts.unsqueeze(1)
-                # Encode in the SAE's own dtype (fp32); activations arrive in the
-                # pipeline's bf16. Encoding in bf16 shifts tfidf enough to flip
-                # ~0.3/20 selected features vs the paper's fp32 scores.
+                # Encode in the SAE's own dtype.
                 sae_input, _, _ = sae.preprocess_input(acts.to(sae.W_dec.dtype))
                 return F.relu(sae.pre_acts(sae_input))
 

@@ -350,8 +350,8 @@ namespaces = false
 # --- uv-specific resolution config -----------------------------------------
 [tool.uv]
 # Real upstream conflicts that pip silently ignored. These force the resolver
-# to accept the working state reproduced from `requirements/h82/`.
-# 1. numpy stays <2 to match what was actually installed in h82 -- every benchmark
+# to accept the working state the benchmark was produced under.
+# 1. numpy stays <2 to match what was actually installed -- every benchmark
 #    artifact was produced under numpy 1.x, so the pin is kept for reproducibility
 #    even though the package that originally demanded it (fadtk) is gone.
 # 2. laion_clap and ssr-eval declare overly-tight transitive bounds that
@@ -368,7 +368,7 @@ pytorchvideo = { git = "https://github.com/facebookresearch/pytorchvideo.git", r
 # (e.g. ssr-eval -> wave -> mysql-python; laion_clap pins exact transformers).
 # Historically installed with `pip install --no-deps`. The equivalent under
 # uv is to override their reported metadata so the resolver treats them as
-# having no dependencies, matching the working h82/ install.
+# having no dependencies, matching the working install.
 [[tool.uv.dependency-metadata]]
 name = "ssr-eval"
 version = "0.0.7"

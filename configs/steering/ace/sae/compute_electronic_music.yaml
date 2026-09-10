@@ -1,6 +1,6 @@
 scorer: sae-scores
-concept: tempo
-output: steering_vectors/sae/ace_tempo_curprompt
+concept: electronic_music
+output: steering_vectors/sae/ace_electronic_music
 scorer-kwargs:
   layers: [tf7, tf6]
   num_inference_steps: 30

@@ -337,7 +337,7 @@ with model.steer(ctrl):
 Compute your own — per-concept feature-selection scores (`tf{6,7}_scores.pkl`):
 
 ```bash
-python src/steering/run_compute.py --config configs/steering/ace/sae/compute_piano_curprompt.yaml
+python src/steering/run_compute.py --config configs/steering/ace/sae/compute_piano.yaml
 # → steering_vectors/sae/ace_piano/{tf7_scores.pkl, tf6_scores.pkl}
 ```
 
@@ -396,6 +396,24 @@ python src/steering/eval/auc.py \
     "outputs/eval/{caa,sae,austeer,concept_slider,freesliders,textemb,pci,tokemb}_piano/protocol_results" \
     --direction both \
     --auto_label
+```
+
+### Reproducing the paper's numbers
+
+`results/` ships the published per-alpha metrics — LPAPS, MuQ, CLAP, Audiobox
+aesthetics and the four decomposed-preservation axes (harmony, melody, rhythm,
+ssm) — for every method × concept, plus the layer-impact scores, in three CSVs
+(1.6 MB). See [`results/README.md`](results/README.md) for the schema. Two
+scripts turn them back into the paper's outputs:
+
+```bash
+# Per-concept tables + the average over all nine concepts.
+python scripts/results/make_tables.py --out tables.md
+python scripts/results/make_tables.py --axis harmony      # a decomposed axis
+python scripts/results/make_tables.py --localization      # layer impact I(l)
+
+# Preservation vs delta-alignment curves; the shaded area is the reported AUC.
+python scripts/results/plot_curves.py
 ```
 
 For a single-method or single-direction breakdown, narrow the glob and pass `--direction pos` or `--direction neg`. `--latex_only` emits a LaTeX `tabular` row for the paper.

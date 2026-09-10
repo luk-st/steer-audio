@@ -1,6 +1,6 @@
 scorer: sae-scores
 concept: vocal_gender
-output: steering_vectors/sae/ace_vocal_gender_curprompt
+output: steering_vectors/sae/ace_vocal_gender
 scorer-kwargs:
   layers: [tf7, tf6]
   num_inference_steps: 30

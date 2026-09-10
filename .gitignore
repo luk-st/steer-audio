@@ -240,12 +240,9 @@ sam-audio/
 steering/outputs_audioldm/
 ai-research-template/
 venv_sam/
+venv_mir/
+.venv_mir/
 
 output/
-# RFM run bookkeeping / local outputs (Claude session)
-.rfm_*
 outputs/calib/
-.venv_mir/
-venv_sam/
 
-src/steering/methods/rfm/music_rfm_codebase

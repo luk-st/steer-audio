@@ -1,6 +1,6 @@
 scorer: sae-scores
-concept: piano
-output: steering_vectors/sae/ace_piano_curprompt
+concept: violin
+output: steering_vectors/sae/ace_violin
 scorer-kwargs:
   layers: [tf7, tf6]
   num_inference_steps: 30

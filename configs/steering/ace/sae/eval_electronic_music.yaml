@@ -1,7 +1,3 @@
-# ABOUTME: SAE eval config for 'electronic_music' at its HOLDOUT-OPTIMAL per-layer top-k
-# ABOUTME: (tf6=100, tf7=10) with renorm — the argmax of the 2D sweep's composite score over
-# ABOUTME: MuQ-T/CLAP x both directions. Ranges seeded from eval_locren_electronic_music x this arm's
-# ABOUTME: alpha_max ratio vs the (20,20) arm; probe-calibrated in-job.
 method: sae
 concept: electronic_music
 min-range: -31.5621

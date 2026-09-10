@@ -1,6 +1,6 @@
 scorer: sae-scores
-concept: mood
-output: steering_vectors/sae/ace_mood_curprompt
+concept: guitar_electronic
+output: steering_vectors/sae/ace_guitar_electronic
 scorer-kwargs:
   layers: [tf7, tf6]
   num_inference_steps: 30

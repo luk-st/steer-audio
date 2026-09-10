@@ -1,7 +1,3 @@
-# ABOUTME: SAE eval config for 'violin' at its HOLDOUT-OPTIMAL per-layer top-k
-# ABOUTME: (tf6=20, tf7=50) with renorm — the argmax of the 2D sweep's composite score over
-# ABOUTME: MuQ-T/CLAP x both directions. Ranges seeded from eval_locren_violin x this arm's
-# ABOUTME: alpha_max ratio vs the (20,20) arm; probe-calibrated in-job.
 method: sae
 concept: violin
 min-range: -10.9822

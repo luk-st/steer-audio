@@ -1,5 +1,3 @@
-# ABOUTME: Pack the 100 per-alpha wavs into a single npz (bit-exact int16 PCM) to cut file count.
-# ABOUTME: One loader for array consumers + an as_wav_dir() shim for path-based tools (MuQ/CLAP).
 
 from __future__ import annotations
 

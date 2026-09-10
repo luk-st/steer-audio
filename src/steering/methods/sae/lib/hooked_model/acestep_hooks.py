@@ -436,12 +436,7 @@ class ACEStepTimestepInterventionHook:
 
         features_to_modify = self.features_per_timestep.get(timestep, [])
 
-        # A no-op intervention must leave the activation untouched. `sae_intervention`
-        # already returns its input unchanged on this condition, but renorm runs
-        # *after* it, and rescaling by norm/(norm + RENORM_EPS) is not the identity:
-        # in bf16 that perturbation compounds over every layer and step and sends the
-        # diffusion down a different trajectory. Renorm exists to undo the norm change
-        # steering causes, so with no steering there is nothing to undo.
+        # A no-op intervention leaves the activation untouched, renorm included.
         if multiplier == 0.0 or not features_to_modify:
             return output
 

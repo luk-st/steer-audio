@@ -1,5 +1,3 @@
-# ABOUTME: Decomposed MIR preservation distances (harmony/rhythm/melody/structure) between
-# ABOUTME: steered(alpha) and baseline(alpha_0) audio, written as lpaps.csv-shaped per-axis CSVs.
 
 import faulthandler
 import warnings

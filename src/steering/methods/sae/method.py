@@ -374,10 +374,7 @@ class SAESteeringController(Controller):
 
     def mount(self, model: Any) -> None:
         self._hooks = []
-        # Match the model's device/dtype before building hooks: the steering
-        # vector is sum(W_dec[features]), so accumulating in fp32 and rounding
-        # afterwards gives a different vector than summing in the model's bf16
-        # (~2e-3 per element, amplified by alpha) and diverges the diffusion.
+        # Match the model's device/dtype before building hooks.
         param = next(model.parameters(), None)
         for hookpoint, spec in self.specs.items():
             if param is not None:

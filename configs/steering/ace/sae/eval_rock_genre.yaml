@@ -1,7 +1,3 @@
-# ABOUTME: SAE eval config for 'rock_genre' at its HOLDOUT-OPTIMAL per-layer top-k
-# ABOUTME: (tf6=50, tf7=20) with renorm — the argmax of the 2D sweep's composite score over
-# ABOUTME: MuQ-T/CLAP x both directions. Ranges seeded from eval_locren_rock_genre x this arm's
-# ABOUTME: alpha_max ratio vs the (20,20) arm; probe-calibrated in-job.
 method: sae
 concept: rock_genre
 min-range: -73.0054

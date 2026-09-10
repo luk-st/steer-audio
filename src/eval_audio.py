@@ -80,7 +80,7 @@ def load_audios_save(path: Path, sample_rate: int) -> Path:
             desc=f"Saving audios: {dir_path}",
         ):
             # torchaudio>=2.9 routes save() through torchcodec, which dlopens
-            # FFmpeg (libavutil.so.56-59); WCSS nodes have none. libsndfile needs
+            # FFmpeg (libavutil.so.56-59), which some nodes lack. libsndfile needs
             # no FFmpeg, and round(x*32768) with clipping reproduces torchcodec's
             # PCM_16 quantization, so samples stay bit-identical to earlier runs.
             samples = (

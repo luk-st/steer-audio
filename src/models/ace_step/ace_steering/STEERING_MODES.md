@@ -285,8 +285,7 @@ output = uncond + w·(cond - uncond) + α·Δ_uncond + w·α·(Δ_cond - Δ_unco
 
 ### Computing Vectors
 
-Vectors are computed by the unified runner (the old ``compute_steering_vectors.py``
-CLI was removed):
+Vectors are computed by the unified runner:
 
 ```bash
 python src/steering/run_compute.py --config configs/steering/ace/caa/compute_piano.yaml
