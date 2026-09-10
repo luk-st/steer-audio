@@ -54,6 +54,11 @@ class SAEActivationsScorer(Scorer):
         max_num_examples: int | None = None,
         **_: Any,
     ) -> Path:
+        from accelerate import Accelerator
+
+        from src.steering.methods.sae.lib.hooked_model.hooked_model_acestep import (
+            HookedACEStepModel,
+        )
         from src.steering.methods.sae.lib.sae.cache_activations_runner_ace import (
             CacheActivationsRunner,
         )
@@ -77,8 +82,11 @@ class SAEActivationsScorer(Scorer):
             max_num_examples=max_num_examples,
             new_cached_activations_path=str(out),
         )
-        runner = CacheActivationsRunner(config, pipeline=model.pipeline)
-        runner.run()
+        accelerator = Accelerator()
+        hooked_model = HookedACEStepModel(
+            pipeline=model.pipeline, device=str(accelerator.device)
+        )
+        CacheActivationsRunner(config, hooked_model, accelerator).run()
         return out
 
 

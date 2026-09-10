@@ -225,6 +225,7 @@ editing/AudioEditingCode/edit_venv
 editing/AudioEditingCode/code/wandb
 .temp
 steering_vectors
+activations/
 
 # Legacy SAE workspace (live code is under src/steering/methods/sae/lib/).
 # Tracked files were removed; the directory remains as a local cache for
