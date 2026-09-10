@@ -8,12 +8,9 @@ UNet by hooking ``attn2`` outputs in the UNet's BasicTransformerBlocks.
 from typing import Literal, Optional
 
 import torch
-from diffusers import AudioLDM2Pipeline
+from diffusers.pipelines.audioldm2.pipeline_audioldm2 import AudioLDM2Pipeline
 
-from src.models.audioldm.audioldm_steering import (
-    VectorStoreAudioLDM,
-    register_vector_control_audioldm,
-)
+from src.models.audioldm.audioldm_steering import VectorStoreAudioLDM, register_vector_control_audioldm
 from src.models.audioldm.constants import AUDIOLDM2_CROSS_ATTENTION_LAYERS
 
 DEFAULT_REPO_ID = "cvssp/audioldm2-large"
@@ -37,13 +34,9 @@ class SteeredAudioLDMPipeline:
         self._hooks: list = []
         self._registered_layers: list[str] = []
 
-    # ------------------------------------------------------------------ #
-    # model load                                                         #
-    # ------------------------------------------------------------------ #
-
     def load(self) -> "SteeredAudioLDMPipeline":
         pipe = AudioLDM2Pipeline.from_pretrained(self.repo_id, torch_dtype=self.dtype)
-        pipe = pipe.to(self.device)
+        pipe = pipe.to(self.device) # type: ignore
         if self.disable_progress_bar:
             pipe.set_progress_bar_config(disable=True)
         self.pipe = pipe
@@ -54,10 +47,6 @@ class SteeredAudioLDMPipeline:
         if self.pipe is None:
             raise RuntimeError("Pipeline not loaded; call load() first.")
         return self.pipe.vocoder.config.sampling_rate
-
-    # ------------------------------------------------------------------ #
-    # steering setup                                                     #
-    # ------------------------------------------------------------------ #
 
     def setup_steering(
         self,
@@ -115,10 +104,6 @@ class SteeredAudioLDMPipeline:
         if self.controller is not None:
             self.controller.reset()
 
-    # ------------------------------------------------------------------ #
-    # generation                                                         #
-    # ------------------------------------------------------------------ #
-
     def generate(
         self,
         prompt,
@@ -132,8 +117,6 @@ class SteeredAudioLDMPipeline:
         if self.pipe is None:
             raise RuntimeError("Pipeline not loaded; call load() first.")
 
-        # Let the controller know whether this call uses CFG so it slices
-        # the batch dimension correctly.
         do_cfg = guidance_scale > 1.0
         if self.controller is not None:
             self.controller.do_cfg = do_cfg
@@ -149,4 +132,4 @@ class SteeredAudioLDMPipeline:
             negative_prompt=negative_prompt,
             num_waveforms_per_prompt=num_waveforms_per_prompt,
         )
-        return out.audios
+        return out.audios  # type: ignore

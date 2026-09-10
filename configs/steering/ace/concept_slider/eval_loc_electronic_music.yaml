@@ -1,8 +1,8 @@
 method: concept_slider
-artifact: lukasz-staniszewski/ace-step-cs-electronic_music-r8-tf6tf7
+artifact: lukasz-staniszewski/ace-step-cs-electronic-music-r8-tf6tf7
 concept: electronic_music
-min-range: -1.3099
-max-range: 0.6974
+min-range: -1.1366
+max-range: 0.7964
 steps-per-side: 15
 duration: 30.0
 steps: 30

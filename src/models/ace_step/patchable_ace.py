@@ -1,18 +1,24 @@
+from collections import defaultdict
 from typing import Union
 
+import nnsight
 import numpy as np
 import torch
 from accelerate import Accelerator
 from tqdm import tqdm
-from collections import defaultdict
-from src.models.utils import move_tensor_obj_to_device
 
+from src.models.ace_step.constants import (
+    CROSS_ATTENTION_KV_LAYERS,
+    CROSS_ATTENTION_KV_OUTPUT_KEYS,
+    CROSS_ATTENTION_LAYERS,
+    CROSS_ATTENTION_PATCH_INPUT_KEYS,
+)
 from src.models.ace_step.modeling_ace import NNSightSimpleACEStep, NNSightSimpleACEStepModel
+from src.models.utils import move_tensor_obj_to_device
 from src.utils import RankedLogger
-import nnsight
-from src.models.ace_step.constants import CROSS_ATTENTION_PATCH_INPUT_KEYS, CROSS_ATTENTION_LAYERS, CROSS_ATTENTION_KV_OUTPUT_KEYS, CROSS_ATTENTION_KV_LAYERS
 
 log = RankedLogger(__name__, rank_zero_only=True)
+
 
 class PatchableACE:
     def __init__(
@@ -20,17 +26,15 @@ class PatchableACE:
         device: str | None = None,
         pad_to_max_len: int | None = None,
     ):
-        self.module = NNSightSimpleACEStep(device = device, dtype = "bfloat16", pad_to_max_len=pad_to_max_len)
-        self.patchable_model = NNSightSimpleACEStepModel(
-            self.module, ""
-        )
+        self.module = NNSightSimpleACEStep(device=device, dtype="bfloat16", pad_to_max_len=pad_to_max_len)
+        self.patchable_model = NNSightSimpleACEStepModel(self.module, "")
         self.pipeline = self.patchable_model._model.pipeline
 
     def get_layers(self, layers_names: list[str]):
         return [(n, m) for (n, m) in self.patchable_model.named_modules() if n in layers_names]
 
     def get_layer_by_name(self, layer_name: str):
-        return [m for (n,m) in self.patchable_model.ace_step_transformer.named_modules() if n == layer_name][0]
+        return [m for (n, m) in self.patchable_model.ace_step_transformer.named_modules() if n == layer_name][0] # type: ignore
 
     def prepare_latents(
         self,
@@ -88,7 +92,7 @@ class PatchableACE:
                         else:
                             traced_items = {}
                             for k in collectable_keys[ln]["inputs"]:
-                                traced_items[k]=layer.inputs[1][k].save()
+                                traced_items[k] = layer.inputs[1][k].save()
                     elif "outputs" in collectable_keys[ln].keys():
                         traced_items = layer.output.save()
                     else:
@@ -126,10 +130,10 @@ class PatchableACE:
     ):
         with self.patchable_model.generate(
             prompts_batch,
-            audio_duration = audio_duration,
-            lyrics = lyrics,
-            infer_step = num_inference_steps,
-            guidance_scale = guidance_scale,
+            audio_duration=audio_duration,
+            lyrics=lyrics,
+            infer_step=num_inference_steps,
+            guidance_scale=guidance_scale,
             scheduler_type=scheduler_type,
             cfg_type=cfg_type,
             omega_scale=omega_scale,
@@ -138,12 +142,9 @@ class PatchableACE:
             guidance_scale_lyric=guidance_scale_lyric,
             guidance_scale_text=guidance_scale_text,
             guidance_interval=guidance_interval,
-            trace=True
+            trace=True,
         ):
-            layers = {
-                ln: self.get_layer_by_name(ln)
-                for ln in layers_to_patch
-            }
+            layers = {ln: self.get_layer_by_name(ln) for ln in layers_to_patch}
             for _ in range(n_patch_iterations):
                 for ln in layers_to_patch:
                     layer = layers[ln]
@@ -183,10 +184,10 @@ class PatchableACE:
     ):
         with self.patchable_model.generate(
             prompts_batch,
-            audio_duration = audio_duration,
-            lyrics = lyrics,
-            infer_step = num_inference_steps,
-            guidance_scale = guidance_scale,
+            audio_duration=audio_duration,
+            lyrics=lyrics,
+            infer_step=num_inference_steps,
+            guidance_scale=guidance_scale,
             scheduler_type=scheduler_type,
             cfg_type=cfg_type,
             omega_scale=omega_scale,
@@ -195,7 +196,7 @@ class PatchableACE:
             guidance_scale_lyric=guidance_scale_lyric,
             guidance_scale_text=guidance_scale_text,
             guidance_interval=guidance_interval,
-            trace=True
+            trace=True,
         ):
             # l_inputs = nnsight.list().save()
             # l_outputs = nnsight.list().save()
@@ -232,10 +233,10 @@ class PatchableACE:
     ):
         with self.patchable_model.generate(
             prompts_batch,
-            audio_duration = audio_duration,
-            lyrics = lyrics,
-            infer_step = num_inference_steps,
-            guidance_scale = guidance_scale,
+            audio_duration=audio_duration,
+            lyrics=lyrics,
+            infer_step=num_inference_steps,
+            guidance_scale=guidance_scale,
             scheduler_type=scheduler_type,
             cfg_type=cfg_type,
             omega_scale=omega_scale,
@@ -244,7 +245,7 @@ class PatchableACE:
             guidance_scale_lyric=guidance_scale_lyric,
             guidance_scale_text=guidance_scale_text,
             guidance_interval=guidance_interval,
-            trace=True
+            trace=True,
         ):
             inputs = nnsight.dict().save()  # type: ignore
             outputs = nnsight.dict().save()  # type: ignore
@@ -336,7 +337,7 @@ class PatchableACE:
                 scheduler_type=scheduler_type,
                 cfg_type=cfg_type,
                 omega_scale=omega_scale,
-                seed=batch_seed
+                seed=batch_seed,
             )
 
             patched_batch_result = self._generate_patched_batch(
@@ -356,14 +357,14 @@ class PatchableACE:
                 scheduler_type=scheduler_type,
                 cfg_type=cfg_type,
                 omega_scale=omega_scale,
-                seed=batch_seed
+                seed=batch_seed,
             )
             outputs_clean.append(clean_batch_result["outputs"].cpu().numpy())
             outputs_patched.append(patched_batch_result["outputs"].cpu().numpy())
             batch_seed += 1
 
-        outputs_clean = np.concatenate(outputs_clean, axis=0)
-        outputs_patched = np.concatenate(outputs_patched, axis=0)
+        outputs_clean = np.concatenate(outputs_clean, axis=0) # type: ignore
+        outputs_patched = np.concatenate(outputs_patched, axis=0) # type: ignore
         log.info(f"Caching/patching done, n={len(outputs_clean)}")
         return {"clean": outputs_clean, "patched": outputs_patched}
 
@@ -421,7 +422,7 @@ class PatchableACE:
                 scheduler_type=scheduler_type,
                 cfg_type=cfg_type,
                 omega_scale=omega_scale,
-                seed=batch_seed
+                seed=batch_seed,
             )
 
             outputs_ablated.append(ablated_batch_result["outputs"].cpu().numpy())
@@ -429,7 +430,7 @@ class PatchableACE:
             # l_outputs.append(ablated_batch_result["l_outputs"])
             batch_seed += 1
 
-        outputs_ablated = np.concatenate(outputs_ablated, axis=0)
+        outputs_ablated = np.concatenate(outputs_ablated, axis=0) # type: ignore
         log.info(f"Ablation done, n={len(outputs_ablated)}")
         # return {"ablated": outputs_ablated, "l_inputs": l_inputs, "l_outputs": l_outputs}
         return {"ablated": outputs_ablated}
@@ -488,7 +489,7 @@ class PatchableACE:
                 scheduler_type=scheduler_type,
                 cfg_type=cfg_type,
                 omega_scale=omega_scale,
-                seed=batch_seed
+                seed=batch_seed,
             )
             for layer_name in layers_to_collect:
                 inputs[layer_name].append(inputs_outputs_batch["inputs"][layer_name])
@@ -496,7 +497,7 @@ class PatchableACE:
             audios.append(inputs_outputs_batch["audios"])
             batch_seed += 1
 
-        audios = np.concatenate(audios, axis=0)
+        audios = np.concatenate(audios, axis=0) # type: ignore
 
         return {
             "inputs": inputs,

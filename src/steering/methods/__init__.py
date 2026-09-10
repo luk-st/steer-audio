@@ -13,6 +13,7 @@ from .concept_slider import ConceptSlidersSteeringController, ConceptSliderTrain
 from .freesliders import FreeSlidersSteeringController
 from .pci import PCISteeringController
 from .sae import LayerSpec, SAEActivationsScorer, SAESteeringController, SAETrainScorer
+from .stable_audio_caa import StableAudioCAASteeringController, StableAudioCaaScorer
 from .textemb import TextEmbSteeringController
 from .tokemb import TokEmbSteeringController, TokEmbScorer
 
@@ -31,6 +32,8 @@ __all__ = [
     "SAEActivationsScorer",
     "SAESteeringController",
     "SAETrainScorer",
+    "StableAudioCAASteeringController",
+    "StableAudioCaaScorer",
     "TextEmbSteeringController",
     "TokEmbSteeringController",
     "TokEmbScorer",

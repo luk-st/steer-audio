@@ -25,6 +25,7 @@ LAYER_TO_SAE_REPO = {
     "tf6": "lukasz-staniszewski/ace-step-sae-tf6-cross-attn",
 }
 LAYER_TO_SCORES_NAME = {"tf7": "tf7_scores.pkl", "tf6": "tf6_scores.pkl"}
+# @TODO: fix to tf7_activations.pkl
 LAYER_TO_ACTS_NAME = {"tf7": "activations.pkl", "tf6": "tf6_activations.pkl"}
 
 
@@ -133,6 +134,8 @@ class SAEScoresScorer(Scorer):
         audio_length_in_s: float = 30.0,
         seed: int = 10,
         force: bool = False,
+        lyrics: str | None = None,
+        reuse_activations: bool = False,
         **_: Any,
     ) -> Path:
         import pickle
@@ -155,27 +158,44 @@ class SAEScoresScorer(Scorer):
             )
         sae_paths = {**LAYER_TO_SAE_REPO, **(sae_paths or {})}
 
-        if model is None:
-            model = SteerableACEModel(device="cuda")
-        if not getattr(model.pipeline, "loaded", False):
-            model.pipeline.load()
-        pipeline = model.pipeline
-        hooked = HookedACEStepModel(pipeline=pipeline, device="cuda")
-
         out = Path(output_dir)
         out.mkdir(parents=True, exist_ok=True)
 
-        neg_prompts, pos_prompts, lyrics = CONCEPT_TO_PROMPTS[concept]()
-        n = max(len(pos_prompts), len(neg_prompts))
-        latents = pipeline.prepare_latents(
-            batch_size=n, audio_duration=audio_length_in_s, seed=seed
-        )
+        # reuse_activations: score-only from precomputed activations (e.g. WCSS-collected,
+        # staged under output_dir). Skips the bf16, hardware-sensitive model run; only the
+        # deterministic fp32 scoring below runs. Model/prompts/latents aren't needed then.
+        pos_prompts = neg_prompts = latents = hooked = None
+        if not reuse_activations:
+            if model is None:
+                model = SteerableACEModel(device="cuda")
+            if not getattr(model.pipeline, "loaded", False):
+                model.pipeline.load()
+            pipeline = model.pipeline
+            hooked = HookedACEStepModel(pipeline=pipeline, device="cuda")
+
+            neg_prompts, pos_prompts, concept_lyrics = CONCEPT_TO_PROMPTS[concept]()
+            # The concept table's lyrics ("[inst]" for instrumental concepts, "" =
+            # free vocals for the two vocal ones) unless overridden. Scoring the
+            # vocal concepts on sung lyrics matches how the eval generates them.
+            lyrics = concept_lyrics if lyrics is None else lyrics
+            print(
+                f"[{concept}] neg[0]={neg_prompts[0]!r} pos[0]={pos_prompts[0]!r} "
+                f"lyrics={'(concept default) ' if lyrics == concept_lyrics else '(override) '}"
+                f"{lyrics[:40]!r}"
+            )
+            n = max(len(pos_prompts), len(neg_prompts))
+            latents = pipeline.prepare_latents(
+                batch_size=n, audio_duration=audio_length_in_s, seed=seed
+            )
 
         def _latents(sae, acts):
             with torch.no_grad():
                 if acts.dim() == 2:
                     acts = acts.unsqueeze(1)
-                sae_input, _, _ = sae.preprocess_input(acts)
+                # Encode in the SAE's own dtype (fp32); activations arrive in the
+                # pipeline's bf16. Encoding in bf16 shifts tfidf enough to flip
+                # ~0.3/20 selected features vs the paper's fp32 scores.
+                sae_input, _, _ = sae.preprocess_input(acts.to(sae.W_dec.dtype))
                 return F.relu(sae.pre_acts(sae_input))
 
         for layer in layers:
@@ -192,49 +212,58 @@ class SAEScoresScorer(Scorer):
                 )
                 continue
 
-            common = dict(
-                audio_duration=audio_length_in_s,
-                lyrics=lyrics,
-                num_inference_steps=num_inference_steps,
-                guidance_scale=guidance_scale,
-                guidance_interval=1.0,
-                guidance_interval_decay=0.0,
-                guidance_scale_text=0.0,
-                guidance_scale_lyric=0.0,
-                manual_seed=seed,
-                return_type="audio",
-                positions_to_cache=[hook],
-            )
-
-            print(f"[{concept}/{layer}] collecting activations …")
-            out_pos = hooked.run_with_cache(
-                prompt=pos_prompts, latents=latents[: len(pos_prompts)], **common
-            )
-            pos_acts = out_pos[1]["output"][hook][: len(pos_prompts)].cpu()
-            del out_pos
-            torch.cuda.empty_cache()
-            out_neg = hooked.run_with_cache(
-                prompt=neg_prompts, latents=latents[: len(neg_prompts)], **common
-            )
-            neg_acts = out_neg[1]["output"][hook][: len(neg_prompts)].cpu()
-            del out_neg
-            torch.cuda.empty_cache()
-            with acts_path.open("wb") as f:
-                pickle.dump(
-                    {"positive": pos_acts, "negative": neg_acts, "concept": concept}, f
+            if reuse_activations:
+                if not acts_path.exists():
+                    raise FileNotFoundError(
+                        f"reuse_activations=True but {acts_path} not found — stage the "
+                        "precomputed activations under output_dir first."
+                    )
+                print(f"[{concept}/{layer}] loading existing activations {acts_path.name}")
+                with acts_path.open("rb") as f:
+                    _d = pickle.load(f)
+                pos_acts, neg_acts = _d["positive"], _d["negative"]
+            else:
+                common = dict(
+                    audio_duration=audio_length_in_s,
+                    lyrics=lyrics,
+                    num_inference_steps=num_inference_steps,
+                    guidance_scale=guidance_scale,
+                    guidance_interval=1.0,
+                    guidance_interval_decay=0.0,
+                    guidance_scale_text=0.0,
+                    guidance_scale_lyric=0.0,
+                    manual_seed=seed,
+                    return_type="audio",
+                    positions_to_cache=[hook],
                 )
+
+                print(f"[{concept}/{layer}] collecting activations …")
+                out_pos = hooked.run_with_cache(
+                    prompt=pos_prompts, latents=latents[: len(pos_prompts)], **common
+                )
+                pos_acts = out_pos[1]["output"][hook][: len(pos_prompts)].cpu()
+                del out_pos
+                torch.cuda.empty_cache()
+                out_neg = hooked.run_with_cache(
+                    prompt=neg_prompts, latents=latents[: len(neg_prompts)], **common
+                )
+                neg_acts = out_neg[1]["output"][hook][: len(neg_prompts)].cpu()
+                del out_neg
+                torch.cuda.empty_cache()
+                with acts_path.open("wb") as f:
+                    pickle.dump(
+                        {"positive": pos_acts, "negative": neg_acts, "concept": concept}, f
+                    )
 
             sae_path = sae_paths[layer]
             if (Path(sae_path) / "sae.safetensors").exists():
                 sae = Sae.load_from_disk(sae_path, device="cuda").eval()
             else:
                 sae = Sae.load_from_hub(sae_path, hookpoint=hook, device="cuda").eval()
-            sae = sae.to(dtype=torch.bfloat16)
 
+            T = pos_acts.shape[1]  # timesteps from the activations themselves (robust in reuse mode)
             tfidf_l, diff_l, mean_pos_l = [], [], []
-            for t in tqdm(
-                range(num_inference_steps), desc=f"[{concept}/{layer}] scoring"
-            ):
+            for t in tqdm(range(T), desc=f"[{concept}/{layer}] scoring"):
                 pos_lat = _latents(sae, pos_acts[:, t].cuda())
                 neg_lat = _latents(sae, neg_acts[:, t].cuda())
                 mp = pos_lat.mean(dim=0).float().cpu()
@@ -254,6 +283,39 @@ class SAEScoresScorer(Scorer):
                     },
                     f,
                 )
+            # Provenance sidecar: the score pickle records no compute settings, so
+            # the artifact cannot otherwise be checked against the config that made it.
+            import json as _json
+            import subprocess as _sp
+
+            try:
+                sha = _sp.check_output(
+                    ["git", "rev-parse", "--short", "HEAD"],
+                    cwd=Path(__file__).resolve().parents[4], text=True
+                ).strip()
+            except Exception:
+                sha = "unknown"
+            (out / f"{layer}_scores_config.json").write_text(
+                _json.dumps(
+                    {
+                        "method": "sae-scores",
+                        "concept": concept,
+                        "layer": layer,
+                        "hookpoint": hook,
+                        "sae_path": str(sae_path),
+                        "num_inference_steps": num_inference_steps,
+                        "audio_length_in_s": audio_length_in_s,
+                        "guidance_scale": guidance_scale,
+                        "seed": seed,
+                        "lyrics": lyrics,
+                        "reuse_activations": reuse_activations,
+                        "num_timesteps": int(T),
+                        "num_features": int(tfidf_l[0].shape[0]),
+                        "git_sha": sha,
+                    },
+                    indent=2,
+                )
+            )
             print(f"[{concept}/{layer}] saved {scores_path.name}")
 
         return out

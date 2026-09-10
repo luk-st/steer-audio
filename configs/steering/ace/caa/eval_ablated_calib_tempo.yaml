@@ -1,0 +1,12 @@
+method: caa
+method-kwargs: {renorm: true}
+artifact: lukasz-staniszewski/ace-step-caa-tempo
+concept: tempo
+layers: no_tf6tf7
+steer-mode: cond_only
+alphas: [0.0, 6.509, 13.018, 19.527, 26.036, 32.545, 39.055, 45.564, 52.073, 58.582, 65.091, 71.6]
+duration: 30.0
+steps: 30
+guidance-scale: 5.0
+seed: 2115
+save-dir: outputs/eval/caa_ablated_calib_tempo

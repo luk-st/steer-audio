@@ -72,6 +72,7 @@ def main() -> None:
             "sae-train",
             "tokemb",
             "audioldm_caa",
+            "stable_audio_caa",
         ],
         help="Which registered Scorer to run.",
     )
@@ -111,9 +112,7 @@ def main() -> None:
             if not hasattr(args, attr):
                 parser.error(f"YAML config has unknown key {key!r}.")
             current = getattr(args, attr)
-            is_default = current is None or (
-                isinstance(current, (dict, list)) and not current
-            )
+            is_default = current is None or (isinstance(current, (dict, list)) and not current)
             if is_default:
                 if attr == "output" and isinstance(val, str):
                     val = Path(val)
@@ -122,9 +121,7 @@ def main() -> None:
     # Validate now that YAML merge is done.
     for required in ("scorer", "output"):
         if getattr(args, required) is None:
-            parser.error(
-                f"--{required} is required (set it on the CLI or in --config)."
-            )
+            parser.error(f"--{required} is required (set it on the CLI or in --config).")
 
     _import_methods()
 
@@ -148,7 +145,7 @@ def main() -> None:
             model.pipeline.load()
 
     print(f"Running {args.scorer} -> {args.output}")
-    out = scorer.compute(model, args.output, **kwargs)
+    out = scorer.compute(model, args.output, **kwargs) # type: ignore
     print(f"Done. Artifact directory: {out}")
 
 

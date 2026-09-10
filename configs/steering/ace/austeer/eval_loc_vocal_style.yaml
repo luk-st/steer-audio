@@ -1,12 +1,12 @@
 method: austeer
-artifact: lukasz-staniszewski/ace-step-austeer-vocal_style-tf6tf7
+artifact: lukasz-staniszewski/ace-step-austeer-vocal-style-all
 concept: vocal_style
 layers: tf6tf7
 steer-mode: cond_only
-min-range: -2.7
-max-range: 4.62
+min-range: -1.7995
+max-range: 2.8987
 steps-per-side: 15
-method-kwargs: {k: 2048, mode: additive, renorm: true}
+method-kwargs: {k: 5120, mode: additive, renorm: true}
 duration: 30.0
 steps: 30
 guidance-scale: 5.0

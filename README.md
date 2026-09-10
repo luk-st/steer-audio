@@ -337,7 +337,7 @@ with model.steer(ctrl):
 Compute your own — per-concept feature-selection scores (`tf{6,7}_scores.pkl`):
 
 ```bash
-python src/steering/run_compute.py --config configs/steering/ace/sae/compute_piano.yaml
+python src/steering/run_compute.py --config configs/steering/ace/sae/compute_piano_curprompt.yaml
 # → steering_vectors/sae/ace_piano/{tf7_scores.pkl, tf6_scores.pkl}
 ```
 
@@ -381,20 +381,6 @@ python src/steering/eval/eval_steering_protocol.py \
     --steering_dir outputs/eval/caa_piano \
     --concept piano
 ```
-
-### Preservation-vs-delta-alignment plots
-
-After running `eval_steering_protocol.py` on multiple methods for the same concept, plot the preservation (`LPAPS`-based) vs. delta-alignment curves and visualise the AUC integral:
-
-```bash
-# Alignment-vs-LPAPS curves per (concept, sign), one panel per method.
-python src/steering/eval/plot_alignment_lpaps_curves.py
-
-# Preservation × delta-alignment curves with the AUC area shaded.
-python src/steering/eval/plot_preservation_delta_alignment_auc.py
-```
-
-Both scripts read from the standard sweep tree (`outputs/<run>/ace_step/concept_<name>/{all|loc}/<method>/protocol_results/`) and write PDFs into `outputs/plots/`.
 
 ### AUC, Smoothness (CSM), Audio Quality
 

@@ -1,8 +1,8 @@
 method: concept_slider
-artifact: lukasz-staniszewski/ace-step-cs-vocal_style-r8-tf6tf7
+artifact: lukasz-staniszewski/ace-step-cs-vocal-style-r16-tf6tf7
 concept: vocal_style
-min-range: -0.7663
-max-range: 0.7195
+min-range: -0.3385
+max-range: 0.3621
 steps-per-side: 15
 duration: 30.0
 steps: 30

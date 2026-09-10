@@ -1,16 +1,11 @@
 """
-CAA steering controller for AudioLDM2 via torch forward hooks.
+CAA steering controller for AudioLDM2 via torch forward hooks:
 
-Hooks attach to cross-attention (attn2) outputs inside each BasicTransformerBlock
-in the UNet. Each attn2 output has shape [B, seq_len, hidden_dim] where:
-  - B = 2*N under classifier-free guidance (first N = uncond, last N = cond)
-  - seq_len = H*W of the latent feature map at that UNet stage
-  - hidden_dim depends on the stage (256 / 384 / 640)
-
-Saved activations are mean-pooled over batch and seq_len, giving a per-layer
-vector of shape [hidden_dim]. Steering vectors (same shape) are added to the
-chosen batch rows and, optionally, the rows are renormalized to their original
-per-position L2 norm.
+1. hooks attach to attn2 outputs
+2. shape=[B, seq_len, hidden_dim], where:
+- B = 2*N under cfg (uncond, cond)
+- seq_len = N latent tokens
+3. acts mean-pooled over batch and seq_len
 """
 
 from collections import defaultdict
@@ -32,7 +27,7 @@ VALID_STEER_MODES = (
 
 
 def resolve_audioldm_layers(layers: str) -> list[str]:
-    """Resolve a short preset name into a list of fully-qualified attn2 layer names."""
+    """Maps short layer preset names to full layer names."""
     if layers == "all":
         return list(AUDIOLDM2_CROSS_ATTENTION_LAYERS)
     if layers == "down":
@@ -50,7 +45,8 @@ def resolve_audioldm_layers(layers: str) -> list[str]:
     # Subsets of up1: 'up1_a5_a10' = up_blocks.1.attentions.{5,10}.transformer_blocks.* = 4 layers
     if layers == "up1_a5_a10":
         return [
-            l for l in AUDIOLDM2_CROSS_ATTENTION_LAYERS
+            l
+            for l in AUDIOLDM2_CROSS_ATTENTION_LAYERS
             if (".up_blocks.1.attentions.5." in l) or (".up_blocks.1.attentions.10." in l)
         ]
     if layers == "all_minus_up1_a5_a10":
@@ -75,7 +71,8 @@ def resolve_audioldm_layers(layers: str) -> list[str]:
         ]
     raise ValueError(
         f"Unknown layers preset: {layers!r}. Options: 'all', 'down', 'mid', 'up', "
-        "'up0/1/2', 'down1/2/3', 'up1_a5_a10', 'all_minus_up1_a5_a10', 'all_minus_up1'."
+        "'up0/1/2', 'down1/2/3', 'up1_a5_a10', 'all_minus_up1_a5_a10', 'all_minus_up1', "
+        "'up1_late7', 'all_minus_up1_late7'."
     )
 
 
@@ -107,9 +104,7 @@ class VectorStoreAudioLDM:
         num_layers: int = 0,
     ):
         if steer_mode not in VALID_STEER_MODES:
-            raise ValueError(
-                f"steer_mode must be one of {VALID_STEER_MODES}, got {steer_mode!r}"
-            )
+            raise ValueError(f"steer_mode must be one of {VALID_STEER_MODES}, got {steer_mode!r}")
 
         self.steering_vectors = steering_vectors
         self.steer = steer
@@ -140,10 +135,6 @@ class VectorStoreAudioLDM:
         self.step_store = defaultdict(lambda: defaultdict(list))
         self.vector_store = defaultdict(dict)
 
-    # ------------------------------------------------------------------ #
-    # hook entry point                                                   #
-    # ------------------------------------------------------------------ #
-
     def on_attn2_output(self, layer_name: str, output: torch.Tensor) -> torch.Tensor:
         """
         Called by the forward hook on each attn2 module.
@@ -162,10 +153,6 @@ class VectorStoreAudioLDM:
             self.cur_step += 1
 
         return output
-
-    # ------------------------------------------------------------------ #
-    # save path                                                          #
-    # ------------------------------------------------------------------ #
 
     def _batch_slices(self, batch_size: int) -> dict:
         """Return the slice objects for cond / uncond halves of the batch."""
@@ -198,10 +185,6 @@ class VectorStoreAudioLDM:
                 if layers_dict:
                     self.vector_store[(self.cur_step, pass_idx)] = dict(layers_dict)
         self.step_store = defaultdict(lambda: defaultdict(list))
-
-    # ------------------------------------------------------------------ #
-    # apply path                                                         #
-    # ------------------------------------------------------------------ #
 
     def _lookup_sv(self, layer_name: str, pass_idx: int) -> Optional[np.ndarray]:
         """Fetch the cond (pass_idx=0) or uncond (pass_idx=1) SV for the current step+layer."""

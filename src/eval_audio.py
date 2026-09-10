@@ -7,10 +7,10 @@ import hydra
 import numpy as np
 import rootutils
 import scipy.io.wavfile as wav
+import soundfile as sf
 from omegaconf import DictConfig
 from tqdm import tqdm
 import torch
-import torchaudio
 import pandas as pd
 
 rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
@@ -32,8 +32,6 @@ rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 # ------------------------------------------------------------------------------------ #
 from src.metrics import (
     calculate_clap,
-    calculate_fad,
-    calculate_music_alignment,
     calculate_muqt,
 )
 from src.utils import RankedLogger, extras, save_dict_to_json, task_wrapper
@@ -81,8 +79,18 @@ def load_audios_save(path: Path, sample_rate: int) -> Path:
             total=len(audios_tensor),
             desc=f"Saving audios: {dir_path}",
         ):
-            torchaudio.save(
-                (dir_path / f"a_id{idx}.wav").resolve(), audio, sample_rate=sample_rate
+            # torchaudio>=2.9 routes save() through torchcodec, which dlopens
+            # FFmpeg (libavutil.so.56-59); WCSS nodes have none. libsndfile needs
+            # no FFmpeg, and round(x*32768) with clipping reproduces torchcodec's
+            # PCM_16 quantization, so samples stay bit-identical to earlier runs.
+            samples = (
+                (audio.float() * 32768.0).round().clamp(-32768.0, 32767.0).to(torch.int16)
+            )
+            sf.write(
+                str((dir_path / f"a_id{idx}.wav").resolve()),
+                samples.numpy().T,
+                sample_rate,
+                subtype="PCM_16",
             )
             idx += 1
 
@@ -127,38 +135,6 @@ def eval(cfg: DictConfig) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     path_to_save_metrics = (
         Path(cfg.paths.all_output_dir) / Path(cfg.paths.generated_samples).parent.parent
     ).resolve()
-
-    if cfg.metrics.fad or cfg.metrics.alignment:
-        reference_samples_path = Path(
-            os.path.join(cfg.paths.all_output_dir, cfg.paths.reference_samples)
-        )
-        reference_samples_path = load_audios_save(
-            reference_samples_path, cfg.patch_model.config.sample_rate
-        )
-
-    wav_files = sorted(Path(generated_samples_path).glob("*.wav"))
-    if not wav_files:
-        raise SystemExit(
-            f"No .wav files found at {generated_samples_path}. "
-            f"Run the patching step for this block first (see README's localization examples)."
-        )
-
-    log.info(f"Calculating metrics over {len(wav_files)} audio file(s)...")
-    if cfg.metrics.fad:
-        log.info("Calculating FAD...")
-        metrics["fad"] = calculate_fad(
-            generated_samples_path=generated_samples_path,
-            reference_samples_path=reference_samples_path,
-        )
-
-    if cfg.metrics.alignment:
-        log.info("Calculating music alignment...")
-        metrics["alignment"] = calculate_music_alignment(
-            generated_samples_path=generated_samples_path,
-            reference_samples_path=reference_samples_path,
-            sampling_rate=cfg.patch_model.config.sample_rate,
-            device=cfg.device,
-        )
 
     if cfg.metrics.clap:
         log.info("Calculating CLAP (basic)...")

@@ -45,7 +45,7 @@ class PromptRewriteWarning(UserWarning):
 
 from .controller import CFGAwareMixin, Controller, NullController
 from .hub import SteeringVectorArtifact, push_sae_to_hub
-from .model import SteerableACEModel, SteerableAudioLDMModel
+from .model import SteerableACEModel, SteerableAudioLDMModel, SteerableStableAudioModel
 from .scorer import Scorer
 
 # Method wrappers — each method exposes its public Controller (and Scorer
@@ -67,6 +67,8 @@ from .methods import (
     SAEActivationsScorer,
     SAESteeringController,
     SAETrainScorer,
+    StableAudioCAASteeringController,
+    StableAudioCaaScorer,
     TextEmbSteeringController,
     TokEmbSteeringController,
     TokEmbScorer,
@@ -80,6 +82,7 @@ __all__ = [
     "Scorer",
     "SteerableACEModel",
     "SteerableAudioLDMModel",
+    "SteerableStableAudioModel",
     "SteeringVectorArtifact",
     "PromptRewriteWarning",
     "push_sae_to_hub",
@@ -91,10 +94,12 @@ __all__ = [
     "FreeSlidersSteeringController",
     "PCISteeringController",
     "SAESteeringController",
+    "StableAudioCAASteeringController",
     "TextEmbSteeringController",
     "TokEmbSteeringController",
     # Method wrappers — Scorers (only methods with a compute phase)
     "AudioLDMCaaScorer",
+    "StableAudioCaaScorer",
     "AuSteerScorer",
     "CAAScorer",
     "ConceptSliderTrainScorer",

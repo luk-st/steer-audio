@@ -3,7 +3,7 @@ Comprehensive Steering Evaluation Protocol for ACE-Step model.
 
 This script evaluates steering vectors using multiple metrics:
 - Concept Alignment: CLAP (music checkpoint), MUQ-T
-- Audio Preservation: LPAPS, FAD (vs baseline)
+- Audio Preservation: LPAPS (vs baseline)
 - Audio Quality: Audiobox aesthetics
 - Steering Metrics: Conceptual Range (CR), Semantic Preservation (SP), Conceptual Smoothness (CSM)
 
@@ -37,7 +37,7 @@ import os
 import sys
 from pathlib import Path
 from typing import List, Optional, Tuple, Literal
-from src.metrics.metrics import calculate_fad, calculate_muqt
+from src.metrics.metrics import calculate_muqt
 from editing.eval import get_lpaps, get_clap
 from src.steering.methods.sae.lib.configs.eval import CONCEPT_TO_EVAL_PROMPTS
 
@@ -45,7 +45,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import torch
-import torchaudio
 from fire import Fire
 from tqdm import tqdm
 
@@ -94,24 +93,28 @@ def _find_alpha_dir(steering_dir: str, alpha: float) -> str:
         alpha_dir = os.path.join(steering_dir, f"alpha_{int(alpha)}")
         if os.path.exists(alpha_dir):
             return alpha_dir
-    return os.path.join(steering_dir, f"alpha_{alpha}")
+    # Fall back to numeric matching, which catches namings the string formats
+    # miss (e.g. alpha_-0.0 when looking up the 0.0 baseline).
+    for path in sorted(Path(steering_dir).glob("alpha_*")):
+        try:
+            if float(path.name[len("alpha_") :]) == alpha:
+                return str(path)
+        except ValueError:
+            continue
+    raise FileNotFoundError(
+        f"No alpha directory for alpha={alpha} in {steering_dir}. Present: "
+        f"{sorted(p.name for p in Path(steering_dir).glob('alpha_*'))}"
+    )
 
 
 def load_audios_for_alpha(
     steering_dir: str, alpha: float
 ) -> Tuple[List[torch.Tensor], Optional[int]]:
-    """Load all audio files for a given alpha value."""
+    """Load all audios for a given alpha (packed audios.npz or legacy *.wav)."""
+    from src.steering.eval.audio_io import load_alpha_audios
+
     alpha_dir = _find_alpha_dir(steering_dir, alpha)
-    audio_files = sorted(Path(alpha_dir).glob("*.wav"))
-
-    audios = []
-    sample_rate = None
-    for audio_file in audio_files:
-        audio, sr = torchaudio.load(audio_file)
-        audios.append(audio)
-        if sample_rate is None:
-            sample_rate = sr
-
+    audios, sample_rate, _ = load_alpha_audios(alpha_dir)
     return audios, sample_rate
 
 
@@ -285,133 +288,6 @@ def compute_lpaps_preservation(
     return pd.DataFrame(results)
 
 
-# NOTE: PSNR/SSIM computation commented out - too slow and disk-intensive
-# def resample_alpha_dir(
-#     steering_dir: str,
-#     alpha: float,
-#     target_sr: int = 32000,
-# ) -> str:
-#     """Resample all audio files in an alpha directory to target sample rate."""
-#     from torchaudio.transforms import Resample
-#
-#     alpha_dir = os.path.join(steering_dir, f"alpha_{alpha}")
-#     resampled_dir = os.path.join(steering_dir, f"alpha_{alpha}_32k")
-#
-#     if os.path.exists(resampled_dir):
-#         # Already resampled
-#         return resampled_dir
-#
-#     os.makedirs(resampled_dir, exist_ok=True)
-#
-#     for audio_file in Path(alpha_dir).glob("*.wav"):
-#         audio, sr = torchaudio.load(audio_file)
-#         if sr != target_sr:
-#             resampler = Resample(sr, target_sr)
-#             audio = resampler(audio)
-#         torchaudio.save(os.path.join(resampled_dir, audio_file.name), audio, target_sr)
-#
-#     return resampled_dir
-#
-#
-# def compute_psnr_ssim_preservation(
-#     steering_dir: str,
-#     alphas: List[float],
-#     sample_rate: int,
-#     device: str = "cuda",
-# ) -> pd.DataFrame:
-#     """Compute PSNR and SSIM scores relative to alpha=0 baseline using MusicAlignmentEval."""
-#     print("\n=== Computing PSNR/SSIM Preservation ===")
-#
-#     from src.metrics.alignment import MusicAlignmentEval
-#
-#     # Resample baseline to 32kHz for MusicAlignmentEval compatibility
-#     baseline_dir_32k = resample_alpha_dir(steering_dir, 0.0, target_sr=32000)
-#
-#     evaluator = MusicAlignmentEval(sampling_rate=32000, device=torch.device(device))
-#
-#     results = []
-#     for alpha in tqdm(alphas, desc="PSNR/SSIM"):
-#         if alpha == 0.0:
-#             results.append(
-#                 {
-#                     "alpha": alpha,
-#                     "psnr": float("inf"),
-#                     "ssim": 1.0,
-#                 }
-#             )
-#             continue
-#
-#         # Resample alpha dir to 32kHz
-#         alpha_dir_32k = resample_alpha_dir(steering_dir, alpha, target_sr=32000)
-#
-#         try:
-#             metrics = evaluator.main(
-#                 generate_files_path=alpha_dir_32k,
-#                 groundtruth_path=baseline_dir_32k,
-#                 limit_num=None,
-#             )
-#             results.append(
-#                 {
-#                     "alpha": alpha,
-#                     "psnr": float(metrics.get("psnr", "nan")),
-#                     "ssim": float(metrics.get("ssim", "nan")),
-#                 }
-#             )
-#         except Exception as e:
-#             print(f"Warning: PSNR/SSIM failed for alpha={alpha}: {e}")
-#             results.append(
-#                 {
-#                     "alpha": alpha,
-#                     "psnr": float("nan"),
-#                     "ssim": float("nan"),
-#                 }
-#             )
-#
-#     return pd.DataFrame(results)
-
-
-def compute_fad_to_baseline(
-    steering_dir: str,
-    alphas: List[float],
-) -> pd.DataFrame:
-    """Compute FAD scores relative to alpha=0 baseline."""
-    print("\n=== Computing FAD to Baseline ===")
-
-    baseline_dir = _find_alpha_dir(steering_dir, 0.0)
-
-    results = []
-    for alpha in tqdm(alphas, desc="FAD"):
-        if alpha == 0.0:
-            results.append(
-                {
-                    "alpha": alpha,
-                    "fad": 0.0,
-                }
-            )
-            continue
-
-        alpha_dir = _find_alpha_dir(steering_dir, alpha)
-
-        try:
-            fad_score = calculate_fad(alpha_dir, baseline_dir)
-            results.append(
-                {
-                    "alpha": alpha,
-                    "fad": fad_score,
-                }
-            )
-        except Exception as e:
-            print(f"Warning: FAD failed for alpha={alpha}: {e}")
-            results.append(
-                {
-                    "alpha": alpha,
-                    "fad": float("nan"),
-                }
-            )
-
-    return pd.DataFrame(results)
-
-
 def compute_aesthetics(
     steering_dir: str,
     alphas: List[float],
@@ -547,7 +423,7 @@ def compute_semantic_preservation(
 
     Returns:
         Mean of the metric across all alphas (excluding alpha=0 if specified).
-        Lower is better for distance metrics (LPAPS, FAD).
+        Lower is better for distance metrics (LPAPS).
         Higher is better for similarity metrics (SSIM, PSNR).
     """
     if exclude_zero:
@@ -675,42 +551,15 @@ def plot_alignment_curves(
 
 def plot_preservation_curves(
     lpaps_df: pd.DataFrame,
-    fad_df: pd.DataFrame,
     save_path: str,
 ):
-    """Plot preservation metric curves (LPAPS and FAD only)."""
-    fig, axes = plt.subplots(1, 2, figsize=(12, 5))
-
-    # LPAPS
-    axes[0].plot(
-        lpaps_df["alpha"],
-        lpaps_df["mean"],
-        "-o",
-        color="#2E86AB",
-        linewidth=2,
-        markersize=6,
-    )
-    axes[0].fill_between(
-        lpaps_df["alpha"],
-        lpaps_df["mean"] - lpaps_df["std"],
-        lpaps_df["mean"] + lpaps_df["std"],
-        alpha=0.3,
-        color="#2E86AB",
-    )
-    axes[0].set_xlabel(r"$\alpha$", fontsize=12)
-    axes[0].set_ylabel("LPAPS (↓ better)", fontsize=12)
-    axes[0].set_title("Audio Perceptual Distance (LPAPS)")
-    axes[0].grid(True, alpha=0.3)
-
-    # FAD to baseline
-    axes[1].plot(
-        fad_df["alpha"], fad_df["mean"], "-o", color="#C73E1D", linewidth=2, markersize=6
-    )
-    axes[1].set_xlabel(r"$\alpha$", fontsize=12)
-    axes[0].set_ylabel("LPAPS (↓ better)", fontsize=12)
-    axes[0].set_title("Audio Perceptual Distance (LPAPS)")
-    axes[1].grid(True, alpha=0.3)
-
+    """Plot the LPAPS preservation curve."""
+    fig, ax = plt.subplots(1, 1, figsize=(6, 5))
+    ax.plot(lpaps_df["alpha"], lpaps_df["mean"], "-o", color="#2E86AB", linewidth=2, markersize=6)
+    ax.set_xlabel(r"$\alpha$", fontsize=12)
+    ax.set_ylabel("LPAPS", fontsize=12)
+    ax.set_title("Audio Preservation (LPAPS vs Baseline)", fontsize=13)
+    ax.grid(True, alpha=0.3)
     plt.tight_layout()
     plt.savefig(save_path, dpi=150, bbox_inches="tight")
     plt.close()
@@ -930,6 +779,8 @@ def main(
     aesthetics_only: bool = False,
     only_clap: bool = False,
     only_muqt: bool = False,
+    eval_prompt: Optional[str] = None,
+    results_subdir: str = "protocol_results",
 ):
     """
     Run comprehensive steering evaluation protocol.
@@ -944,6 +795,11 @@ def main(
         aesthetics_only: Only compute aesthetics and merge with existing results
         only_clap: If True, only compute/update CLAP alignment (load existing MUQ-T from CSV)
         only_muqt: If True, only compute/update MUQ-T alignment (load existing CLAP from CSV)
+        eval_prompt: Override the concept's alignment prompt for BOTH metrics and all
+            alphas. Used to score a sweep against the opposite pole (e.g. "a song with
+            male vocal") without touching the concept lookup table.
+        results_subdir: Where to write the CSVs under steering_dir. Give a second scoring
+            pass its own subdir so it does not overwrite the primary results.
     """
     if only_clap and only_muqt:
         raise ValueError("Cannot set both --only_clap and --only_muqt")
@@ -952,6 +808,8 @@ def main(
         return run_aesthetics_only(steering_dir, device)
 
     eval_prompts = CONCEPT_TO_EVAL_PROMPTS[concept]
+    if eval_prompt is not None:
+        eval_prompts = {"clap": eval_prompt, "muqt": eval_prompt}
 
     print("=== Comprehensive Steering Evaluation Protocol ===")
     print(f"Steering directory: {steering_dir}")
@@ -978,7 +836,7 @@ def main(
     print(f"Sample rate: {sample_rate}")
 
     # Create output directory
-    output_dir = os.path.join(steering_dir, "protocol_results")
+    output_dir = os.path.join(steering_dir, results_subdir)
     os.makedirs(output_dir, exist_ok=True)
 
     results = {}
@@ -1032,10 +890,8 @@ def main(
         lpaps_df = compute_lpaps_preservation(steering_dir, alphas, device)
     results["lpaps"] = lpaps_df.to_dict()
 
-    # NOTE: PSNR/SSIM/FAD computation disabled - too slow and disk-intensive
+    # NOTE: PSNR/SSIM computation disabled - too slow and disk-intensive
 
-    # fad_baseline_df = compute_fad_to_baseline(steering_dir, alphas)
-    # results["fad_baseline"] = fad_baseline_df.to_dict()
 
     # 3. Audio Quality Metrics
     print("\n" + "=" * 50)
@@ -1079,7 +935,6 @@ def main(
 
     # Compute Semantic Preservation for preservation metrics
     sp_lpaps = compute_semantic_preservation(lpaps_df, value_col="mean")
-    # sp_fad = compute_semantic_preservation(fad_baseline_df, value_col="fad")
 
     preservation_metrics = {
         "SP_LPAPS": sp_lpaps,  # ↓ better (distance)
@@ -1128,7 +983,6 @@ def main(
     )
     plot_preservation_curves(
         lpaps_df,
-        lpaps_df,
         os.path.join(output_dir, "preservation_curves.png"),
     )
     plot_quality_curves(aesthetics_df, os.path.join(output_dir, "quality_curves.png"))
@@ -1149,7 +1003,6 @@ def main(
         muqt_df.to_csv(os.path.join(output_dir, "muqt.csv"), index=False)
     if not run_single_metric:
         lpaps_df.to_csv(os.path.join(output_dir, "lpaps.csv"), index=False)
-    # fad_baseline_df.to_csv(os.path.join(output_dir, "fad_baseline.csv"), index=False)
 
     if not aesthetics_df.empty:
         aesthetics_df.to_csv(os.path.join(output_dir, "aesthetics.csv"), index=False)

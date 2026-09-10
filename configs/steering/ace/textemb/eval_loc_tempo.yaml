@@ -1,8 +1,8 @@
 method: textemb
 artifact: ""
 concept: tempo
-min-range: -0.55
-max-range: 0.55
+min-range: -0.5721
+max-range: 0.5547
 steps-per-side: 15
 method-kwargs: {te_split_step: 0, target_layers: tf6tf7}
 duration: 30.0

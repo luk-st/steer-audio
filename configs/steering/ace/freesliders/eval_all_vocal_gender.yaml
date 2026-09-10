@@ -1,8 +1,8 @@
 method: freesliders
 artifact: ""
 concept: vocal_gender
-min-range: -2.76
-max-range: 3.0
+min-range: -2.9536
+max-range: 2.8324
 steps-per-side: 15
 method-kwargs: {split_step: 0, target_layers: all}
 duration: 30.0

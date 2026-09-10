@@ -25,7 +25,7 @@ CROSS_ATTENTION_LAYERS = [
     ".ace_step_transformer.transformer_blocks.20.cross_attn",
     ".ace_step_transformer.transformer_blocks.21.cross_attn",
     ".ace_step_transformer.transformer_blocks.22.cross_attn",
-    ".ace_step_transformer.transformer_blocks.23.cross_attn"
+    ".ace_step_transformer.transformer_blocks.23.cross_attn",
 ]
 
 CROSS_ATTENTION_KV_LAYERS = [
@@ -76,5 +76,5 @@ CROSS_ATTENTION_KV_LAYERS = [
     ".ace_step_transformer.transformer_blocks.22.cross_attn.to_k",
     ".ace_step_transformer.transformer_blocks.22.cross_attn.to_v",
     ".ace_step_transformer.transformer_blocks.23.cross_attn.to_k",
-    ".ace_step_transformer.transformer_blocks.23.cross_attn.to_v"
+    ".ace_step_transformer.transformer_blocks.23.cross_attn.to_v",
 ]

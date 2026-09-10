@@ -4,9 +4,7 @@ artifact: lukasz-staniszewski/ace-step-caa-tempo
 concept: tempo
 layers: no_tf6tf7
 steer-mode: cond_only
-min-range: -110.0
-max-range: 50.0
-steps-per-side: 15
+alphas: [0.0, 5.3728, 10.7456, 16.1184, 21.4912, 26.864, 32.2368, 37.6096, 42.9824, 48.3552, 53.728, 59.1008, 64.4736, 69.8464, 75.2192, 80.592]
 duration: 30.0
 steps: 30
 guidance-scale: 5.0

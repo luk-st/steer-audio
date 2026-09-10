@@ -3,10 +3,10 @@ artifact: lukasz-staniszewski/ace-step-austeer-mood-all
 concept: mood
 layers: all
 steer-mode: cond_only
-min-range: -14.0
-max-range: 9.8
+min-range: -20.6003
+max-range: 12.0334
 steps-per-side: 15
-method-kwargs: {k: 2048, mode: additive, renorm: true}
+method-kwargs: {k: 1024, mode: additive, renorm: true}
 duration: 30.0
 steps: 30
 guidance-scale: 5.0

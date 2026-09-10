@@ -50,7 +50,7 @@ def plot_spectrograms(
 
         # Plot spectrogram with fixed value range
         img = librosa.display.specshow(
-            S_db,
+            S_db,  # type: ignore
             sr=sr_loaded,
             hop_length=hop_length,
             x_axis="time" if idx == len(audio_paths) - 1 else None,
@@ -77,7 +77,7 @@ def plot_spectrograms(
     # Add single colorbar on the right side for all subplots
     plt.tight_layout()
     plt.subplots_adjust(left=0.08, right=0.92)  # Make room for frequency label and colorbar
-    cbar = fig.colorbar(img, ax=axes.tolist() if hasattr(axes, "tolist") else axes, format="%+2.0f dB", pad=0.02)
+    cbar = fig.colorbar(img, ax=axes.tolist() if hasattr(axes, "tolist") else axes, format="%+2.0f dB", pad=0.02)  # type: ignore
     cbar.set_label("Power (dB)", rotation=270, labelpad=20)
 
     plt.show()
@@ -157,7 +157,7 @@ def plot_mel_spectrograms(
     # Add single colorbar on the right side for all subplots
     plt.tight_layout()
     plt.subplots_adjust(left=0.08, right=0.92)  # Make room for frequency label and colorbar
-    cbar = fig.colorbar(img, ax=axes.tolist() if hasattr(axes, "tolist") else axes, format="%+2.0f dB", pad=0.02)
+    cbar = fig.colorbar(img, ax=axes.tolist() if hasattr(axes, "tolist") else axes, format="%+2.0f dB", pad=0.02)  # type: ignore
     cbar.set_label("Power (dB)", rotation=270, labelpad=20)
 
     plt.show()

@@ -1,8 +1,8 @@
 method: concept_slider
 artifact: lukasz-staniszewski/ace-step-cs-violin-r8-tf6tf7
 concept: violin
-min-range: -0.9882
-max-range: 1.0844
+min-range: -0.7072
+max-range: 0.783
 steps-per-side: 15
 duration: 30.0
 steps: 30

@@ -1,0 +1,12 @@
+method: caa
+method-kwargs: {renorm: true}
+artifact: lukasz-staniszewski/ace-step-caa-vocal-gender
+concept: vocal_gender
+layers: no_tf6tf7
+steer-mode: cond_only
+alphas: [0.0, 10.673, 21.345, 32.018, 42.691, 53.364, 64.036, 74.709, 85.382, 96.055, 106.727, 117.4]
+duration: 30.0
+steps: 30
+guidance-scale: 5.0
+seed: 2115
+save-dir: outputs/eval/caa_ablated_calib_vocal_gender

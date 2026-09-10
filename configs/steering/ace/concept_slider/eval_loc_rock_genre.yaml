@@ -1,8 +1,8 @@
 method: concept_slider
-artifact: lukasz-staniszewski/ace-step-cs-rock_genre-r8-tf6tf7
+artifact: lukasz-staniszewski/ace-step-cs-rock-genre-r16-tf6tf7
 concept: rock_genre
-min-range: -0.4919
-max-range: 0.9003
+min-range: -0.3769
+max-range: 0.3603
 steps-per-side: 15
 duration: 30.0
 steps: 30

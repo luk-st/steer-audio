@@ -74,10 +74,20 @@ def _load_prompts_file(path: Path, column: str = "prompt") -> list[str]:
 def _alphas_from_range(
     min_range: float, max_range: float, steps_per_side: int
 ) -> list[float]:
-    """Symmetric sweep: ``steps_per_side`` neg + 0 + ``steps_per_side`` pos."""
-    neg = [
-        round(min_range * i / steps_per_side, 4) for i in range(steps_per_side, 0, -1)
-    ]
+    """Symmetric sweep: ``steps_per_side`` neg + 0 + ``steps_per_side`` pos.
+
+    ``min_range == 0`` means a one-directional sweep (``0`` + the positive side),
+    as used by the multi-concept experiment where the concept signs are baked
+    into the combined vector.
+    """
+    neg = (
+        []
+        if min_range == 0
+        else [
+            round(min_range * i / steps_per_side, 4)
+            for i in range(steps_per_side, 0, -1)
+        ]
+    )
     pos = [
         round(max_range * i / steps_per_side, 4) for i in range(1, steps_per_side + 1)
     ]
@@ -105,6 +115,19 @@ def _eval_prompts(concept: str) -> list[str]:
         return [f"a song about {concept}"]
 
 
+def _git_sha() -> str:
+    """Current repo commit, so every result is traceable to the exact code."""
+    import subprocess
+
+    return subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=Path(__file__).resolve().parents[2],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
+
+
 def _build_controller(
     method: str,
     artifact: str,
@@ -123,6 +146,17 @@ def _build_controller(
     import src.steering.methods  # noqa: F401
 
     cls = get_method(method)
+
+    # SAE multi-hookpoint (paper 'loc' = tf6 + tf7 with different SAEs / top_k):
+    # build one spec per hookpoint via the single-hook loader, then merge.
+    if method == "sae" and "hookpoints" in method_kwargs:
+        specs: dict[str, Any] = {}
+        for hp_cfg in method_kwargs["hookpoints"]:
+            hp_cfg = dict(hp_cfg)
+            repo = hp_cfg.pop("artifact")
+            sub = cls.from_pretrained(repo, alpha=alpha, **hp_cfg)
+            specs.update(sub.specs)
+        return cls(specs)
 
     # SAE: features_per_timestep keys come back as strings from JSON; coerce.
     if method == "sae" and "features_per_timestep" in method_kwargs:
@@ -197,6 +231,7 @@ def main() -> None:
             "pci",
             "tokemb",
             "audioldm_caa",
+            "stable_audio_caa",
         ],
         help="Which registered steering method to run.",
     )
@@ -226,6 +261,11 @@ def main() -> None:
         type=int,
         default=15,
         help="Number of intermediate alphas per side of zero when using --min/--max-range.",
+    )
+    parser.add_argument(
+        "--extremes-only",
+        action="store_true",
+        help="Keep only {min, 0, max} of the resolved alpha sweep (fast repro check).",
     )
     parser.add_argument(
         "--layers",
@@ -263,7 +303,16 @@ def main() -> None:
         default="prompt",
         help="Column name to use when --prompts-file is a CSV. Default: 'prompt'.",
     )
-    parser.add_argument("--lyrics", default="[inst]")
+    parser.add_argument("--lyrics", default=None,
+        help="Override lyrics for all prompts. Unset: vocal concepts sing (paired LYRICS), others [inst].")
+    parser.add_argument(
+        "--neutral-addon",
+        default=None,
+        help="Override the neutral-prompt wrap template (must contain '{p}'), "
+        "instead of CONCEPT_TO_NEUTRAL_ADDON[concept]. Used by multi-concept "
+        "combos, whose baseline audio must contain every steered constituent. "
+        "Pass '{p}' for no wrap.",
+    )
     parser.add_argument("--duration", type=float, default=30.0)
     parser.add_argument("--steps", type=int, default=30)
     parser.add_argument("--seed", type=int, default=2115)
@@ -276,7 +325,24 @@ def main() -> None:
         default={},
         help="JSON dict of method-specific kwargs forwarded to from_pretrained.",
     )
-    parser.add_argument("--save-mono", action="store_true", default=True)
+    parser.add_argument(
+        "--save-mono",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Downmix to mono on save (default True). Every metric is computed "
+        "on the saved audio, so mono is canonical: a cell that saves stereo is "
+        "not comparable to one that saves mono, baseline included. "
+        "--no-save-mono (or save-mono: false in YAML) keeps the raw stereo "
+        "output and exists only to reproduce paper-era runs that saved that way.",
+    )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=None,
+        help="Chunk the prompt list into batches of this size (diffusers-style "
+        "models only: audioldm / stable_audio). Default None = one call. Each "
+        "chunk seeds with seed+chunk_idx, so noise is matched across alphas.",
+    )
     args = parser.parse_args()
 
     if args.config is not None:
@@ -284,11 +350,19 @@ def main() -> None:
 
     # After config merge, validate the required-args ourselves (since argparse
     # required=True wouldn't allow them to come from YAML).
-    for required in ("method", "artifact", "concept"):
+    required_args = ["method", "artifact", "concept"]
+    # SAE multi-hookpoint configs carry a per-hookpoint artifact instead.
+    if args.method == "sae" and "hookpoints" in (args.method_kwargs or {}):
+        required_args.remove("artifact")
+    for required in required_args:
         if getattr(args, required) is None:
             parser.error(
                 f"--{required} is required (set it on the CLI or in --config)."
             )
+
+    # save_mono defaults to True (mono) when neither CLI nor YAML set it.
+    if args.save_mono is None:
+        args.save_mono = True
 
     # Resolve alpha sweep: explicit --alphas > --min/--max-range > default.
     if args.alphas is not None:
@@ -299,6 +373,8 @@ def main() -> None:
         parser.error("--min-range and --max-range must be supplied together.")
     else:
         alphas = [-40.0, -20.0, 0.0, 20.0, 40.0]
+    if args.extremes_only:
+        alphas = sorted({min(alphas), 0.0, max(alphas)})
     args.alphas = alphas
 
     # Fold shell-friendly flags into method_kwargs.
@@ -324,16 +400,37 @@ def main() -> None:
     else:
         prompts = _eval_prompts(args.concept)
 
+    # Per-concept lyrics. Vocal concepts must actually sing, so with --lyrics
+    # unset they use the paired LYRICS list (aligned to TEST_PROMPTS); every
+    # other concept is instrumental ("[inst]"). An explicit --lyrics overrides.
+    # Computed here (before the neutral wrap) so lyrics[i] stays aligned to
+    # prompts[i] by index. Pipeline accepts lyrics as a per-prompt list.
+    VOCAL_CONCEPTS = {"vocal_gender", "vocal_style"}
+    if args.lyrics is not None:
+        lyrics = args.lyrics
+    elif args.concept in VOCAL_CONCEPTS:
+        from src.steering.eval.test_prompts import LYRICS, TEST_PROMPTS
+
+        _lyric_of = dict(zip(TEST_PROMPTS, LYRICS))
+        lyrics = [_lyric_of.get(p, "") for p in prompts]  # "" => free vocals if unmapped
+        n_mapped = sum(1 for p in prompts if p in _lyric_of)
+        print(
+            f"Vocal concept {args.concept!r}: singing with paired lyrics "
+            f"({n_mapped}/{len(prompts)} mapped; unmapped use empty=free vocals)"
+        )
+    else:
+        lyrics = "[inst]"
+
     # All methods are expected to condition the model on the same `neutral` text
     # at alpha=0, so their baselines line up and only the steering signal
     # differs. TextEmb / TokEmb / PCI apply the wrap internally (their
     # build_prompt_triple's `neutral` IS the canonical neutral); the other
     # methods leave the prompt untouched, so we pre-wrap here using the same
     # template (CONCEPT_TO_NEUTRAL_ADDON[concept]).
-    if args.method not in ("textemb", "tokemb", "pci"):
+    if args.method not in ("textemb", "tokemb", "pci", "freesliders"):
         from src.steering.methods.caa.utils.constants import CONCEPT_TO_NEUTRAL_ADDON
 
-        addon = CONCEPT_TO_NEUTRAL_ADDON.get(args.concept)
+        addon = args.neutral_addon or CONCEPT_TO_NEUTRAL_ADDON.get(args.concept)
         if addon is not None:
             prompts = [addon.format(p=p) for p in prompts]
             print(
@@ -370,21 +467,29 @@ def main() -> None:
         "concept": args.concept,
         "alphas": args.alphas,
         "prompts": prompts,
-        "lyrics": args.lyrics,
+        "lyrics": lyrics,
+        "neutral_addon": args.neutral_addon,
         "duration": args.duration,
         "steps": args.steps,
         "seed": args.seed,
         "guidance_scale": args.guidance_scale,
         "method_kwargs": args.method_kwargs,
         "command": " ".join(sys.argv),
+        "git_sha": _git_sha(),
     }
     (save_dir / "run_config.json").write_text(json.dumps(run_config, indent=2))
 
     # AudioLDM2-based methods use a different model wrapper and pipeline call
     # signature. ACE-Step is the default for everything else.
     is_audioldm = args.method.startswith("audioldm")
+    is_stable_audio = args.method.startswith("stable_audio")
 
-    if is_audioldm:
+    if is_stable_audio:
+        from src.steering import SteerableStableAudioModel
+
+        print(f"Loading SteerableStableAudioModel on {args.device}...")
+        model = SteerableStableAudioModel(device=args.device)
+    elif is_audioldm:
         from src.steering import SteerableAudioLDMModel
 
         print(f"Loading SteerableAudioLDMModel on {args.device}...")
@@ -418,18 +523,24 @@ def main() -> None:
             controller.set_alpha(alpha)
             controller.reset()
             print(f"  alpha={alpha}")
-            if is_audioldm:
-                audios = model.generate(
-                    prompt=prompts,
-                    num_inference_steps=args.steps,
-                    audio_length_in_s=args.duration,
-                    guidance_scale=args.guidance_scale,
-                    seed=args.seed,
-                )
+            if is_audioldm or is_stable_audio:
+                bs = args.batch_size or len(prompts)
+                chunks = []
+                for c, start in enumerate(range(0, len(prompts), bs)):
+                    controller.reset()
+                    chunk_audios = model.generate(
+                        prompt=prompts[start : start + bs],
+                        num_inference_steps=args.steps,
+                        audio_length_in_s=args.duration,
+                        guidance_scale=args.guidance_scale,
+                        seed=args.seed + c,
+                    )
+                    chunks.extend(list(chunk_audios))
+                audios = chunks
             else:
                 audios = model.generate(
                     prompt=prompts,
-                    lyrics=args.lyrics,
+                    lyrics=lyrics,
                     audio_duration=args.duration,
                     infer_step=args.steps,
                     manual_seed=args.seed,
@@ -437,23 +548,22 @@ def main() -> None:
                     guidance_scale=args.guidance_scale,
                     guidance_interval=1.0,
                 )
+            from src.steering.eval.audio_io import save_alpha_audios
+
             alpha_dir = save_dir / f"alpha_{alpha}"
-            alpha_dir.mkdir(parents=True, exist_ok=True)
-            for i, audio in enumerate(audios):
+            prepared = []
+            for audio in audios:
                 if is_audioldm:
-                    torchaudio.save(
-                        str(alpha_dir / f"p{i}.wav"),
-                        audio.detach().cpu().unsqueeze(0),  # mono (N,) -> (1, N)
-                        model.sample_rate,
-                    )
+                    a = audio.detach().cpu().unsqueeze(0)  # mono (N,) -> (1, N)
+                elif is_stable_audio:
+                    a = audio.detach().cpu()  # stereo (C, N)
                 else:
-                    if args.save_mono and audio.dim() == 2:
-                        audio = audio.mean(dim=0, keepdim=True)
-                    torchaudio.save(
-                        str(alpha_dir / f"p{i}.wav"),
-                        audio.cpu(),
-                        model.sample_rate,
-                    )
+                    a = audio.cpu()
+                    if args.save_mono and a.dim() == 2:
+                        a = a.mean(dim=0, keepdim=True)
+                prepared.append(a)
+            # One packed audios.npz per alpha (int16 PCM) instead of 100 wavs.
+            save_alpha_audios(alpha_dir, prepared, model.sample_rate)
 
     print(f"Done. {len(args.alphas)} alpha dirs written under {save_dir}")
 

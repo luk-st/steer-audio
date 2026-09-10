@@ -4,8 +4,8 @@ artifact: lukasz-staniszewski/ace-step-caa-piano
 concept: piano
 layers: all
 steer-mode: cond_only
-min-range: -65.0
-max-range: 65.0
+min-range: -66.3859
+max-range: 69.2622
 steps-per-side: 15
 duration: 30.0
 steps: 30

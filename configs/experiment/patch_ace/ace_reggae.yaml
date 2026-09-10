@@ -3,5 +3,5 @@
 defaults:
   - override /patch_config: ace
   - override /patch_layers: ace/self_attn/none
-  - override /patch_data: musiccaps/reggae
+  - override /patch_data: musiccaps/reggae_ace
   - override /patch_model: ace_patch

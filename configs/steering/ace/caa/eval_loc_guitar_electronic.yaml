@@ -1,11 +1,11 @@
 method: caa
 method-kwargs: {renorm: true}
-artifact: lukasz-staniszewski/ace-step-caa-guitar_electronic
+artifact: lukasz-staniszewski/ace-step-caa-guitar-electronic
 concept: guitar_electronic
 layers: tf6tf7
 steer-mode: cond_only
-min-range: -69.69
-max-range: 80.0
+min-range: -76.7974
+max-range: 78.7766
 steps-per-side: 15
 duration: 30.0
 steps: 30

@@ -1,6 +1,6 @@
 type: "csv"
 csv_path: "lukasz-staniszewski/patching-music-musiccaps-prompts"
-feature: "rock_genre"
+feature: "jazz"
 prefix_clean: ""
 suffix_clean: ""
 prefix_corrupted: ""

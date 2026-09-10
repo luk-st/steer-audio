@@ -1,8 +1,8 @@
 method: textemb
 artifact: ""
 concept: rock_genre
-min-range: -0.62
-max-range: 0.51
+min-range: -0.6542
+max-range: 0.5089
 steps-per-side: 15
 method-kwargs: {te_split_step: 0, target_layers: all}
 duration: 30.0

@@ -1,8 +1,8 @@
 method: tokemb
 artifact: lukasz-staniszewski/ace-step-tokemb-mood
 concept: mood
-min-range: -1.1
-max-range: 1.2
+min-range: -2.3117
+max-range: 1.8747
 steps-per-side: 15
 method-kwargs: {te_split_step: 0, target_layers: all}
 duration: 30.0

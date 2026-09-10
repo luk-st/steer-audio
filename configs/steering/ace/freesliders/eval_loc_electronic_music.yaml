@@ -1,8 +1,8 @@
 method: freesliders
 artifact: ""
 concept: electronic_music
-min-range: -2.8
-max-range: 3.36
+min-range: -2.9173
+max-range: 3.7134
 steps-per-side: 15
 method-kwargs: {split_step: 0, target_layers: tf6tf7}
 duration: 30.0

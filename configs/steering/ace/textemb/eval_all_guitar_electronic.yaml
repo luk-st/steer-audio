@@ -1,8 +1,8 @@
 method: textemb
 artifact: ""
 concept: guitar_electronic
-min-range: -0.33
-max-range: 0.43
+min-range: -0.3698
+max-range: 0.4298
 steps-per-side: 15
 method-kwargs: {te_split_step: 0, target_layers: all}
 duration: 30.0

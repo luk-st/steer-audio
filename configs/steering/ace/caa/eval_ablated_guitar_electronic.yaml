@@ -1,6 +1,6 @@
 method: caa
 method-kwargs: {renorm: true}
-artifact: lukasz-staniszewski/ace-step-caa-guitar_electronic
+artifact: lukasz-staniszewski/ace-step-caa-guitar-electronic
 concept: guitar_electronic
 layers: no_tf6tf7
 steer-mode: cond_only

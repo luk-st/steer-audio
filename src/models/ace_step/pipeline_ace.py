@@ -34,7 +34,7 @@ class SimpleACEStepPipeline(ACEStepPipeline):
             overlapped_decode=overlapped_decode,
             pad_to_max_len=pad_to_max_len,
         )
-        self.device = device
+        self.device = device # type: ignore
         self.sample_rate = SAMPLE_RATE
 
     def load(self, lora_name_or_path: str = "none", lora_weight: float = 1.0):

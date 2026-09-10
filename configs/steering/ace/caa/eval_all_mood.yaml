@@ -4,8 +4,8 @@ artifact: lukasz-staniszewski/ace-step-caa-mood
 concept: mood
 layers: all
 steer-mode: cond_only
-min-range: -59.0
-max-range: 33.0
+min-range: -48.5299
+max-range: 29.8997
 steps-per-side: 15
 duration: 30.0
 steps: 30

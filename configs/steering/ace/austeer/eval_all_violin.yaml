@@ -3,10 +3,10 @@ artifact: lukasz-staniszewski/ace-step-austeer-violin-all
 concept: violin
 layers: all
 steer-mode: cond_only
-min-range: -6.67
-max-range: 10.66
+min-range: -19.0649
+max-range: 56.8553
 steps-per-side: 15
-method-kwargs: {k: 2048, mode: additive, renorm: true}
+method-kwargs: {k: 256, mode: additive, renorm: true}
 duration: 30.0
 steps: 30
 guidance-scale: 5.0

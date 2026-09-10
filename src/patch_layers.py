@@ -32,7 +32,6 @@ def generate_with_patch(cfg: DictConfig, accelerator: Accelerator) -> Dict[str, 
     assert cfg.patch_layers
     assert cfg.patch_model.model_name in [
         "audioldm2",
-        "diffrhythm",
         "stableaudio",
         "ace_step",
     ]
@@ -50,12 +49,6 @@ def generate_with_patch(cfg: DictConfig, accelerator: Accelerator) -> Dict[str, 
             dtype=dtype,
             device=device,
             negative_prompt=cfg.patch_config.negative_prompt,
-        )
-    elif model_name == "diffrhythm":
-        pipeline = hydra.utils.instantiate(
-            cfg.patch_model.pipeline,
-            max_frames=cfg.patch_config.max_frames,
-            device=device,
         )
     elif model_name == "ace_step":
         pipeline = hydra.utils.instantiate(
@@ -120,11 +113,6 @@ def generate_with_patch(cfg: DictConfig, accelerator: Accelerator) -> Dict[str, 
             seed=cfg.patch_config.seed,
             audio_length_in_s=cfg.patch_config.audio_length_in_s,
         )
-    elif model_name == "diffrhythm":
-        latents = pipeline.prepare_latents(
-            n_prompts=len(clean_prompts),
-            seed=cfg.patch_config.seed,
-        )
     elif model_name == "ace_step":
         latents = pipeline.prepare_latents(
             n_prompts=len(clean_prompts),
@@ -132,13 +120,7 @@ def generate_with_patch(cfg: DictConfig, accelerator: Accelerator) -> Dict[str, 
             audio_duration=cfg.patch_config.audio_duration,
         )
 
-    if model_name == "diffrhythm":
-        kwargs_sampling = {
-            "lrc_prompts": cfg.patch_config.lrc_prompts,
-        }
-        if cfg.patch_config.method == "ablate":
-            kwargs_sampling["ablate_null_pred"] = cfg.patch_config.ablate_null_pred
-    elif model_name in ["audioldm2", "stableaudio"]:
+    if model_name in ["audioldm2", "stableaudio"]:
         kwargs_sampling = {
             "audio_length_in_s": cfg.patch_config.audio_length_in_s,
         }
@@ -194,7 +176,12 @@ def generate_with_patch(cfg: DictConfig, accelerator: Accelerator) -> Dict[str, 
                 guidance_scale=cfg.patch_config.guidance_scale,
                 **kwargs_sampling,
             )
+        # Optionally downmix to mono to halve on-disk size; the metric encoders
+        # (MuQ/CLAP) downmix internally, so this is lossless for the eval.
+        save_mono = cfg.patch_config.get("save_mono", False)
         for output_name, output_audios in audios.items():
+            if save_mono and output_audios.ndim == 3 and output_audios.shape[1] > 1:
+                output_audios = output_audios.mean(axis=1)
             all_outputs[output_name].append(output_audios)
     accelerator.wait_for_everyone()
 

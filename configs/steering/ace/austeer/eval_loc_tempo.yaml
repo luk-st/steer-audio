@@ -1,12 +1,12 @@
 method: austeer
-artifact: lukasz-staniszewski/ace-step-austeer-tempo-tf6tf7
+artifact: lukasz-staniszewski/ace-step-austeer-tempo-all
 concept: tempo
 layers: tf6tf7
 steer-mode: cond_only
-min-range: -2.15
-max-range: 2.5
+min-range: -1.4303
+max-range: 1.7204
 steps-per-side: 15
-method-kwargs: {k: 2048, mode: additive, renorm: true}
+method-kwargs: {k: 4096, mode: additive, renorm: true}
 duration: 30.0
 steps: 30
 guidance-scale: 5.0

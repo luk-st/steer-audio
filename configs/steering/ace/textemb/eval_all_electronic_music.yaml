@@ -1,8 +1,8 @@
 method: textemb
 artifact: ""
 concept: electronic_music
-min-range: -0.5
-max-range: 0.49
+min-range: -0.4789
+max-range: 0.5182
 steps-per-side: 15
 method-kwargs: {te_split_step: 0, target_layers: all}
 duration: 30.0

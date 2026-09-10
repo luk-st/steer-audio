@@ -174,7 +174,9 @@ class FreeSlidersSteeringController(Controller):
 
         If both ``positive_prompt_suffix`` and ``negative_prompt_suffix`` are
         set, use them directly. Otherwise fall back to the per-concept
-        ``build_prompt_triple`` table inside ``run_freesliders``.
+        ``build_prompt_triple`` table, overriding the neutral with the
+        concept-specific ``CONCEPT_TO_NEUTRAL_ADDON`` (matches the paper:
+        positive/negative are built from the raw prompt, neutral is the addon).
         """
         if self.positive_prompt_suffix is not None and self.negative_prompt_suffix is not None:
             return (
@@ -182,4 +184,8 @@ class FreeSlidersSteeringController(Controller):
                 f"{raw_prompt}{self.positive_prompt_suffix}",
                 f"{raw_prompt}{self.negative_prompt_suffix}",
             )
-        return builder(raw_prompt, self.concept)
+        from src.steering.methods.caa.utils.constants import CONCEPT_TO_NEUTRAL_ADDON
+
+        _neutral, pos, neg = builder(raw_prompt, self.concept)
+        neutral = CONCEPT_TO_NEUTRAL_ADDON.get(self.concept, "{p}").format(p=raw_prompt)
+        return neutral, pos, neg

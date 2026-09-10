@@ -1,8 +1,8 @@
 method: tokemb
 artifact: lukasz-staniszewski/ace-step-tokemb-piano
 concept: piano
-min-range: -1.9
-max-range: 1.34
+min-range: -1.8283
+max-range: 1.4309
 steps-per-side: 15
 method-kwargs: {te_split_step: 0, target_layers: tf6tf7}
 duration: 30.0

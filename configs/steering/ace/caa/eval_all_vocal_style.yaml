@@ -1,11 +1,11 @@
 method: caa
 method-kwargs: {renorm: true}
-artifact: lukasz-staniszewski/ace-step-caa-vocal_style
+artifact: lukasz-staniszewski/ace-step-caa-vocal-style
 concept: vocal_style
 layers: all
 steer-mode: cond_only
-min-range: -34.84
-max-range: 56.0
+min-range: -32.926
+max-range: 60.4731
 steps-per-side: 15
 duration: 30.0
 steps: 30

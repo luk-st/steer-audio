@@ -1,8 +1,8 @@
 method: tokemb
 artifact: lukasz-staniszewski/ace-step-tokemb-violin
 concept: violin
-min-range: -1.6
-max-range: 1.31
+min-range: -1.5986
+max-range: 1.3572
 steps-per-side: 15
 method-kwargs: {te_split_step: 0, target_layers: all}
 duration: 30.0

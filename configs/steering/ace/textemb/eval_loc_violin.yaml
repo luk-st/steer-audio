@@ -1,8 +1,8 @@
 method: textemb
 artifact: ""
 concept: violin
-min-range: -0.17
-max-range: 1.0
+min-range: -0.1764
+max-range: 1.0251
 steps-per-side: 15
 method-kwargs: {te_split_step: 0, target_layers: tf6tf7}
 duration: 30.0

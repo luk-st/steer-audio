@@ -1,8 +1,8 @@
 method: freesliders
 artifact: ""
 concept: vocal_style
-min-range: -1.6
-max-range: 2.69
+min-range: -1.5857
+max-range: 2.847
 steps-per-side: 15
 method-kwargs: {split_step: 0, target_layers: all}
 duration: 30.0

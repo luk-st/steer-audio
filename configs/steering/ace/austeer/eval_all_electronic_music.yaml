@@ -1,12 +1,12 @@
 method: austeer
-artifact: lukasz-staniszewski/ace-step-austeer-electronic_music-all
+artifact: lukasz-staniszewski/ace-step-austeer-electronic-music-all
 concept: electronic_music
 layers: all
 steer-mode: cond_only
-min-range: -7.11
-max-range: 8.0
+min-range: -5.3317
+max-range: 6.3869
 steps-per-side: 15
-method-kwargs: {k: 2048, mode: additive, renorm: true}
+method-kwargs: {k: 4096, mode: additive, renorm: true}
 duration: 30.0
 steps: 30
 guidance-scale: 5.0
