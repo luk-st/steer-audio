@@ -7,7 +7,7 @@ Output layout is compatible with ``eval_steering_protocol.py``::
 
     <save_dir>/
       run_config.json
-      alpha_<value>/p<i>.wav
+      alpha_<value>/audios.npz
       ...
 
 Usage::

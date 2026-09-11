@@ -39,8 +39,8 @@ set -a; source .env; set +a
 ```
 
 3. Model checkpoints:
-+ **ACE-Step weights** (≈ 7.8 GB) will be downloaded to `${ACE_STEP_CACHE}` on first run; **AudioLDM2 / Stable Audio Open** checkpoints pull from their respective HF repos on first use.
-+ **CLAP (music) checkpoint** (≈ 2.2 GB) is *required for every evaluation script*. Download `music_audioset_epoch_15_esc_90.14.pt` from [HuggingFace](https://huggingface.co/lukewys/laion_clap/tree/main):
++ **ACE-Step weights** are downloaded to `${ACE_STEP_CACHE}`; **AudioLDM2 / Stable Audio Open** from HF.
++ **CLAP** (`music_audioset_epoch_15_esc_90.14.pt`) from [HF](https://huggingface.co/lukewys/laion_clap/tree/main):
     ```bash
     mkdir -p res/clap/pretrained
     wget -O res/clap/pretrained/music_audioset_epoch_15_esc_90.14.pt https://huggingface.co/lukewys/laion_clap/resolve/main/music_audioset_epoch_15_esc_90.14.pt
@@ -50,11 +50,9 @@ set -a; source .env; set +a
 
 ## 🔍 Localization
 
-**Activation patching** (causal tracing) with `NNSight` to identify which layers in each audio-diffusion architecture encode specific musical features (e.g. "violin", "female vocal", "slow tempo").
-
 ### Counterfactual prompt dataset
 
-We release [`lukasz-staniszewski/patching-music-musiccaps-prompts`](https://huggingface.co/datasets/lukasz-staniszewski/patching-music-musiccaps-prompts) — 3,246 rows of `(clean, corrupted)` prompt pairs over **21 features** (`female`, `male`, `fast`, `slow`, `happy`, `sad`, `reggae`, `metal`, `opera`, `jazz`, `violin`, `trumpet`, `saxophone`, `drums`, `cello`, `bongos`, `flute`, `maracas`, `harmonica`, `trombone`, `xylophone`). Each row is a real MusicCaps caption mentioning a feature, paired with the same caption after a word-level counterfactual swap (e.g. *violin*→*trumpet*, *fast*→*slow*).
+We release [`lukasz-staniszewski/patching-music-musiccaps-prompts`](https://huggingface.co/datasets/lukasz-staniszewski/patching-music-musiccaps-prompts) — counterfactual prompt pairs over 21 musical features.
 
 To load:
 ```python
@@ -68,7 +66,7 @@ print(violin_rows[0])
 #  'corrupted_prompt': 'A folk piece with trumpet and ...'}
 ```
 
-Each row contains: `original_feature` (filter on this for a per-feature run), `clean_prompt` (un-patched activations), and `corrupted_prompt` (source activations to patch in). Feature words and their counterfactual swap maps live in `src/preprocess/features.py` (`MUSICCAPS_ORIGINAL_FEATURES`, `MUSICCAPS_COUNTERFACTUAL_FEATURES`, `MUSICCAPS_SWAPS_FEATURES`).
+Each row contains: `original_feature`, `clean_prompt` (from MusicCaps), and `corrupted_prompt`. Feature words and replacements are in `src/preprocess/features.py`.
 
 #### Regenerating the MusicCaps prompts
 
@@ -121,7 +119,7 @@ python src/patch_layers.py \
 bash sh_scripts/localization/eval_feature_ace.sh violin violin_summary none tf5 tf6 tf7 all
 ```
 
-Available `patch_layers` presets for ACE-Step: `ace/all`, `ace/none`, `ace/tf{0..23}`, plus combos like `ace/tf5tf6`, `ace/tf5tf6tf7`, `ace/tf6tf7`. Browse `configs/patch_layers/ace/` for the full list.
+Browse `configs/patch_layers/ace/` for available `patch_layers` presets.
 
 #### AudioLDM 2
 
@@ -135,7 +133,7 @@ python src/patch_layers.py \
 bash sh_scripts/localization/eval_feature_audioldm2.sh violin violin_summary up1tf5
 ```
 
-Available presets: `audioldm2/all`, `audioldm2/none`, `audioldm2/up0`, `audioldm2/up1`, `audioldm2/up2`, `audioldm2/mid`, `audioldm2/down{1,2,3}`, plus fine-grained sub-blocks like `audioldm2/up1tf5`, `audioldm2/up1tf5attn0`, `audioldm2/up1tf9attn1`, `audioldm2/up1tf2tf5tf9tf10` (combos), etc. See `configs/patch_layers/audioldm2/`.
+Browse `configs/patch_layers/audioldm2/` for available `patch_layers` presets.
 
 #### Stable Audio Open
 
@@ -150,7 +148,7 @@ python src/patch_layers.py \
 bash sh_scripts/localization/eval_feature_stableaudio.sh violin violin_summary tf11
 ```
 
-Available presets: `stableaudio/all`, `stableaudio/none`, `stableaudio/tf{0..N}`, plus per-projection sub-blocks like `stableaudio/tf11v`, `stableaudio/tf11k`, `stableaudio/tf12k`, and combos like `stableaudio/tf11tf12`. See `configs/patch_layers/stableaudio/`.
+Browse `configs/patch_layers/stableaudio/` for available `patch_layers` presets.
 
 
 ---
@@ -172,7 +170,7 @@ A typical workflow: **(1)** compute steering artifacts once with `src/steering/r
 | [CAA](#caa) | Contrastive Activation Addition (mean-diff steering vector) | yes | `CAASteeringController` |
 | [SAE](#sae) | Sparse-autoencoder feature interventions | yes | `SAESteeringController` |
 
-Pretrained artifacts live in the [**TADA Steering Collection**](https://huggingface.co/collections/lukasz-staniszewski/tada-steering-collection). Every example below uses `concept="piano"`; pass `target_layers="tf6tf7"` (or any list of block names) to restrict to localized layers. The table covers ACE-Step; AudioLDM2 and Stable Audio Open are steered through their own CAA controllers — see [Other architectures](#other-architectures-audioldm2-and-stable-audio-open).
+Pretrained artifacts live in the [**TADA Steering Collection**](https://huggingface.co/collections/lukasz-staniszewski/tada-steering-collection). Every example below uses `concept="piano"`; pass `target_layers="tf6tf7"` (or any list of block names) to restrict to localized layers.
 
 ---
 
@@ -409,19 +407,18 @@ Experiments have a corresponding YAML config in `configs/steering/`.
 
 ```bash
 python src/steering/run_eval.py --config configs/steering/ace/caa/eval_loc_piano.yaml
-# → outputs/eval/caa_loc_piano/{run_config.json, alpha_<value>/p<i>.wav}
+# → outputs/eval/caa_loc_piano/{run_config.json, alpha_<value>/audios.npz}
 ```
 
-Each method has up to **three eval variants** per concept (mirroring the paper):
-- `eval_all_<concept>.yaml` — steer all 24 transformer blocks
-- `eval_loc_<concept>.yaml` — steer only the localized `tf6` + `tf7` layers
-- `eval_ablated_<concept>.yaml` — **CAA only**; steer all *except* `tf6`/`tf7` (sanity check)
+Methods have eval variants: `eval_all_<concept>.yaml` (steer all attn layers),
+`eval_loc_<concept>.yaml` (steer localized layers), `eval_ablated_<concept>.yaml`
+(CAA only, steer all except localized).
 
-Every hparam in the YAML — `alphas`, `layers`, `steer-mode`, `duration`, `steps`, `seed`, `guidance-scale`, plus the method-specific `method-kwargs` dict — is also a CLI flag (CLI overrides YAML when both are supplied). The evaluation set defaults to the **100-prompt `TEST_PROMPTS`** set in `src/steering/eval/test_prompts.py`; override with `prompts: [...]` inline or `prompts-file:` at a `.txt` (one per line) or `.csv` (named column via `prompts-column:`). See [`configs/steering/ace/caa/eval_piano_custom.yaml`](configs/steering/ace/caa/eval_piano_custom.yaml) for an annotated template.
+Every hparam in the YAML is also a CLI flag, see `configs/steering/ace/caa/eval_piano_custom.yaml` for an annotated template.
 
 ### Compute concept-alignment + preservation metrics
 
-`src/steering/eval/eval_steering_protocol.py` computes CLAP, MUQ-T, LPAPS, FAD, and Audiobox aesthetics for one sweep directory and writes `protocol_results/` next to it.
+`src/steering/eval/eval_steering_protocol.py` computes CLAP, MUQ-T, LPAPS, and Audiobox aesthetics for one sweep directory and writes `protocol_results/` next to it.
 
 ```bash
 python src/steering/eval/eval_steering_protocol.py \
@@ -429,55 +426,3 @@ python src/steering/eval/eval_steering_protocol.py \
     --concept piano
 ```
 
-### AUC, Smoothness (CSM), Audio Quality
-
-`src/steering/eval/auc.py` is the single entry point that aggregates per-method `protocol_results/` directories into a LaTeX-ready table:
-
-- **AUC** — area under the preservation × delta-alignment curve (per direction `pos`/`neg`, and overall). Higher is better.
-- **CSM (Conceptual Smoothness)** — std of consecutive `delta_alignment` differences across alphas. Lower is better.
-- **Audio Quality** — Audiobox aesthetics (CE / CU / PC / PQ) interpolated at a fixed preservation level so the comparison across methods is at matched audio-quality budget.
-
-```bash
-# Compare all 8 methods on one concept (each path is a protocol_results/ dir).
-python src/steering/eval/auc.py \
-    "outputs/eval/{caa,sae,austeer,concept_slider,freesliders,textemb,pci,tokemb}_piano/protocol_results" \
-    --direction both \
-    --auto_label
-```
-
-### Reproducing the paper's numbers
-
-`results/` ships the published per-alpha metrics — LPAPS, MuQ, CLAP, Audiobox
-aesthetics and the four decomposed-preservation axes (harmony, melody, rhythm,
-ssm) — for every method × concept, plus the layer-impact scores, in three CSVs
-(1.6 MB). See [`results/README.md`](results/README.md) for the schema. Two
-scripts turn them back into the paper's outputs:
-
-```bash
-# Per-concept tables + the average over all nine concepts.
-python scripts/results/make_tables.py --out tables.md
-python scripts/results/make_tables.py --axis harmony      # a decomposed axis
-python scripts/results/make_tables.py --localization      # layer impact I(l)
-
-# Preservation vs delta-alignment curves; the shaded area is the reported AUC.
-python scripts/results/plot_curves.py
-```
-
-For a single-method or single-direction breakdown, narrow the glob and pass `--direction pos` or `--direction neg`. `--latex_only` emits a LaTeX `tabular` row for the paper.
-
----
-
-## 🙏 Credits
-
-This repository builds on: [ACE-Step](https://github.com/ace-step/ACE-Step), [DDPM Inversion for Audio](https://github.com/HilaManor/AudioEditingCode), [CASteer](https://github.com/Atmyre/CASteer), [Universal DiffSAE](https://github.com/cywinski/universal-diffsae).
-
-## 📚 BibTeX
-
-```bibtex
-@article{staniszewski2026tada,
-  title={TADA! Tuning Audio Diffusion Models through Activation Steering},
-  author={Staniszewski, {\L}ukasz and Zaleska, Katarzyna and Modrzejewski, Mateusz and Deja, Kamil},
-  journal={arXiv preprint arXiv:2602.11910},
-  year={2026}
-}
-```
