@@ -426,3 +426,53 @@ python src/steering/eval/eval_steering_protocol.py \
     --concept piano
 ```
 
+### Metrics: AUC, Smoothness, Audio Quality
+
+`src/steering/eval/auc.py` aggregates per-method results into tables:
+
+- **AUC** — area under the preservation--alignment curve
+- **Smoothness** — std of consecutive alignment differences across alphas
+- **Audio Quality** — Audiobox Aesthetics (CE / CU / PC / PQ) at steering points
+
+```bash
+# Compare all 8 methods on one concept (each path is a protocol_results/ dir).
+python src/steering/eval/auc.py \
+    "outputs/eval/{caa,sae,austeer,concept_slider,freesliders,textemb,pci,tokemb}_piano/protocol_results" \
+    --direction both \
+    --auto_label
+```
+
+### Reproducing the paper's numbers
+
+[`results/`](results/README.md) dir contains per-alpha metrics — Alignment (MuQ,
+CLAP), Quality, and Preservation (LPAPS, Harmony, Melody, Rhythm, Ssm) — and
+layer-impact scores. Scripts reproduce paper's outputs:
+
+```bash
+# Per-concept tables + the average over all nine concepts.
+python scripts/results/make_tables.py --out tables.md
+python scripts/results/make_tables.py --axis harmony      # a decomposed axis
+python scripts/results/make_tables.py --localization      # layer impact I(l)
+
+# Preservation vs delta-alignment curves; the shaded area is the reported AUC.
+python scripts/results/plot_curves.py
+```
+
+For a single-method or single-direction breakdown, pass `--direction pos` or `--direction neg`.
+
+---
+
+## 🙏 Credits
+
+This repository builds on: [ACE-Step](https://github.com/ace-step/ACE-Step), [DDPM Inversion for Audio](https://github.com/HilaManor/AudioEditingCode), [CASteer](https://github.com/Atmyre/CASteer), [Universal DiffSAE](https://github.com/cywinski/universal-diffsae).
+
+## 📚 BibTeX
+
+```bibtex
+@article{staniszewski2026tada,
+  title={TADA! Tuning Audio Diffusion Models through Activation Steering},
+  author={Staniszewski, {\L}ukasz and Zaleska, Katarzyna and Modrzejewski, Mateusz and Deja, Kamil},
+  journal={arXiv preprint arXiv:2602.11910},
+  year={2026}
+}
+```
