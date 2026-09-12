@@ -96,9 +96,7 @@ python scripts/hub/push_localization_prompts.py \
 
 ### Running activation patching
 
-The patching driver is `src/patch_layers.py`, configured via Hydra. The top-level config is `configs/generate_audio_patch.yaml`; per-architecture overrides live under `configs/patch_model/<arch>_patch.yaml`, per-feature data overrides under `configs/patch_data/musiccaps/<feature>[_<arch>].yaml`, and per-block layer presets under `configs/patch_layers/<arch>/<preset>.yaml`. After generation, `src/eval_audio.py` computes CLAP / MUQ-T metrics over the patched audio.
-
-A typical sweep patches each block in turn (or `none`, the un-patched baseline) and compares CLAP/MuQ scores across blocks.
+The patching driver is `src/patch_layers.py`, configured via Hydra. The main config is `configs/generate_audio_patch.yaml`, per-architecture: `configs/patch_model/<arch>_patch.yaml`. After generation, `src/eval_audio.py` computes CLAP / MUQ-T metrics over the patched audio.
 
 ### Per-architecture examples
 
